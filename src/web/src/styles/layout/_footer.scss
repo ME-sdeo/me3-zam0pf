@@ -1,0 +1,166 @@
+// ==========================================================================
+// Footer Component Styles
+// Version: 1.0.0
+// Description: SCSS styles for the global footer component implementing 
+// Material Design 3.0, responsive layout, and accessibility features
+// ==========================================================================
+
+@import '../utils/variables';
+@import '../utils/mixins';
+
+// Main footer container
+.footer {
+  position: relative;
+  z-index: map-get($z-index, 'footer');
+  width: 100%;
+  padding: map-get($spacing, 'lg') map-get($spacing, 'md');
+  
+  @include theme-aware('background-color', 
+    map-get($colors, 'background', 'default'),
+    map-get($colors, 'background', 'paper')
+  );
+  
+  @include theme-aware('border-top',
+    '1px solid #{map-get($colors, "border", "light")}',
+    '1px solid #{map-get($colors, "border", "dark")}'
+  );
+  
+  transition: background-color map-get($transitions, 'duration', 'normal')
+              map-get($transitions, 'timing', 'ease-in-out');
+  contain: layout style;
+}
+
+// Content wrapper with responsive layout
+.footer__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: map-get($grid, 'container', 'desktop');
+  margin: 0 auto;
+  gap: map-get($spacing, 'md');
+  
+  @include respond-to('tablet') {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: map-get($spacing, 'lg');
+  }
+  
+  @include respond-to('mobile') {
+    padding: map-get($spacing, 'md');
+    gap: map-get($spacing, 'sm');
+  }
+}
+
+// Navigation section with adaptive layout
+.footer__navigation {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: map-get($spacing, 'lg');
+  
+  @include respond-to('tablet') {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: map-get($spacing, 'xl');
+  }
+  
+  @include respond-to('mobile') {
+    flex-direction: column;
+    align-items: center;
+    gap: map-get($spacing, 'md');
+  }
+}
+
+// Links list with proper spacing and accessibility
+.footer__links {
+  display: flex;
+  flex-direction: column;
+  gap: map-get($spacing, 'sm');
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  
+  [dir='rtl'] & {
+    margin-right: 0;
+    margin-left: map-get($spacing, 'md');
+  }
+}
+
+// Interactive link with accessibility features
+.footer__link {
+  @include theme-aware('color',
+    map-get($colors, 'text', 'secondary'),
+    map-get($colors, 'text', 'primary')
+  );
+  text-decoration: none;
+  font-size: map-get($typography, 'font-sizes', 'body2');
+  transition: color map-get($transitions, 'duration', 'fast')
+              map-get($transitions, 'timing', 'ease-out');
+  
+  @include focus-ring(map-get($colors, 'primary', 'main'));
+  
+  &:hover {
+    @include theme-aware('color',
+      map-get($colors, 'primary', 'main'),
+      map-get($colors, 'primary', 'light')
+    );
+  }
+  
+  &:focus-visible {
+    outline: none;
+    @include focus-ring(map-get($colors, 'primary', 'main'));
+  }
+}
+
+// Copyright text with proper contrast
+.footer__copyright {
+  @include theme-aware('color',
+    map-get($colors, 'text', 'secondary'),
+    map-get($colors, 'text', 'primary')
+  );
+  font-size: map-get($typography, 'font-sizes', 'body2');
+  text-align: center;
+  
+  @include respond-to('mobile') {
+    font-size: map-get($typography, 'font-sizes', 'caption');
+  }
+}
+
+// Responsive logo with proper sizing
+.footer__logo {
+  height: 32px;
+  width: auto;
+  
+  @include respond-to('mobile') {
+    height: 24px;
+  }
+  
+  [dir='rtl'] & {
+    margin-right: 0;
+    margin-left: map-get($spacing, 'md');
+  }
+}
+
+// High contrast mode overrides
+@media (prefers-contrast: high) {
+  .footer {
+    border-top: 2px solid currentColor;
+  }
+  
+  .footer__link {
+    text-decoration: underline;
+    
+    &:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: 4px;
+    }
+  }
+}
+
+// Reduced motion preferences
+@media (prefers-reduced-motion: reduce) {
+  .footer,
+  .footer__link {
+    transition: none;
+  }
+}

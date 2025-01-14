@@ -1,0 +1,85 @@
+{
+  "name": "MyElixir Healthcare Data Marketplace Network",
+  "version": "2.2",
+  "client": {
+    "organization": "MyElixirOrg",
+    "connection": {
+      "timeout": {
+        "peer": {
+          "endorser": "300",
+          "eventHub": "300",
+          "eventReg": "300"
+        },
+        "orderer": "300"
+      }
+    },
+    "credentialStore": {
+      "path": "/tmp/hfc-kvs",
+      "cryptoStore": {
+        "path": "/tmp/hfc-cvs"
+      }
+    }
+  },
+  "channels": {
+    "consentchannel": {
+      "orderers": [
+        "orderer.myelixir.com"
+      ],
+      "peers": {
+        "peer0.myelixir.com": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        }
+      }
+    }
+  },
+  "organizations": {
+    "MyElixirOrg": {
+      "mspid": "MyElixirOrgMSP",
+      "peers": [
+        "peer0.myelixir.com"
+      ],
+      "certificateAuthorities": [
+        "ca.myelixir.com"
+      ]
+    }
+  },
+  "orderers": {
+    "orderer.myelixir.com": {
+      "url": "grpcs://orderer.myelixir.com:7050",
+      "grpcOptions": {
+        "ssl-target-name-override": "orderer.myelixir.com",
+        "hostnameOverride": "orderer.myelixir.com"
+      },
+      "tlsCACerts": {
+        "path": "../crypto-config/ordererOrganizations/myelixir.com/orderers/orderer.myelixir.com/tls/ca.crt"
+      }
+    }
+  },
+  "peers": {
+    "peer0.myelixir.com": {
+      "url": "grpcs://peer0.myelixir.com:7051",
+      "grpcOptions": {
+        "ssl-target-name-override": "peer0.myelixir.com",
+        "hostnameOverride": "peer0.myelixir.com"
+      },
+      "tlsCACerts": {
+        "path": "../crypto-config/peerOrganizations/myelixir.com/peers/peer0.myelixir.com/tls/ca.crt"
+      }
+    }
+  },
+  "certificateAuthorities": {
+    "ca.myelixir.com": {
+      "url": "https://ca.myelixir.com:7054",
+      "caName": "ca.myelixir.com",
+      "tlsCACerts": {
+        "path": "../crypto-config/peerOrganizations/myelixir.com/ca/ca.myelixir.com-cert.pem"
+      },
+      "httpOptions": {
+        "verify": false
+      }
+    }
+  }
+}

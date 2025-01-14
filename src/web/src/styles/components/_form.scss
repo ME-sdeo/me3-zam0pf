@@ -1,0 +1,199 @@
+// ==========================================================================
+// Form Component Styles
+// Version: 1.0.0
+// Description: Core SCSS styles for form components with HIPAA compliance
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// Form Variables
+$form-input-height: 56px;
+$form-label-margin: map.get($spacing, "xs");
+$form-group-margin: map.get($spacing, "md");
+$form-validation-icon-size: 24px;
+$form-medical-data-padding: map.get($spacing, "lg");
+$form-sensitive-field-background: rgba(map.get($colors, "semantic", "warning"), 0.05);
+
+// Form Validation State Mixin
+@mixin form-validation-state($state, $color, $is_medical_data: false) {
+  .form-control {
+    border-color: $color;
+    
+    @if $is_medical_data {
+      background-color: rgba($color, 0.02);
+    }
+
+    &:focus {
+      border-color: $color;
+      box-shadow: 0 0 0 2px rgba($color, 0.25);
+    }
+  }
+
+  .form-feedback-icon {
+    color: $color;
+    width: $form-validation-icon-size;
+    height: $form-validation-icon-size;
+
+    @if $is_medical_data {
+      border: 2px solid currentColor;
+      border-radius: map.get($border-radius, "circle");
+      padding: map.get($spacing, "xxs");
+    }
+  }
+
+  .form-text {
+    color: $color;
+    font-weight: map.get($typography, "font-weights", "medium");
+    
+    @if $is_medical_data {
+      &::before {
+        content: "⚕";
+        margin-right: map.get($spacing, "xs");
+      }
+    }
+  }
+}
+
+// Base Form Group
+.form-group {
+  margin-bottom: $form-group-margin;
+  position: relative;
+  
+  &--medical-data {
+    padding: $form-medical-data-padding;
+    background-color: $form-sensitive-field-background;
+    border-radius: map.get($border-radius, "medium");
+  }
+}
+
+// Form Labels
+.form-label {
+  display: block;
+  margin-bottom: $form-label-margin;
+  font-family: map.get($typography, "font-family", "primary");
+  font-size: map.get($typography, "font-sizes", "body1");
+  font-weight: map.get($typography, "font-weights", "medium");
+  color: map.get($colors, "text", "primary");
+
+  &--required::after {
+    content: "*";
+    color: map.get($colors, "semantic", "error");
+    margin-left: map.get($spacing, "xxs");
+  }
+
+  &--medical-data {
+    font-weight: map.get($typography, "font-weights", "bold");
+    
+    &::before {
+      content: "🔒";
+      margin-right: map.get($spacing, "xs");
+    }
+  }
+}
+
+// Form Controls
+.form-control {
+  width: 100%;
+  height: $form-input-height;
+  padding: map.get($spacing, "md") map.get($spacing, "lg");
+  font-family: map.get($typography, "font-family", "primary");
+  font-size: map.get($typography, "font-sizes", "body1");
+  line-height: map.get($typography, "line-heights", "normal");
+  color: map.get($colors, "text", "primary");
+  background-color: map.get($colors, "background", "default");
+  border: 2px solid map.get($colors, "border", "medium");
+  border-radius: map.get($border-radius, "medium");
+  transition: all map.get($transitions, "duration", "normal") map.get($transitions, "timing", "ease-in-out");
+
+  @include focus-ring(map.get($colors, "primary", "main"));
+
+  &::placeholder {
+    color: map.get($colors, "text", "hint");
+  }
+
+  &:disabled {
+    background-color: map.get($colors, "background", "disabled");
+    cursor: not-allowed;
+  }
+
+  &--medical-data {
+    font-family: map.get($typography, "font-family", "monospace");
+    letter-spacing: map.get($typography, "letter-spacing", "wide");
+    background-color: $form-sensitive-field-background;
+  }
+}
+
+// Form Validation States
+.form-control.is-valid {
+  @include form-validation-state("valid", map.get($colors, "semantic", "success"));
+}
+
+.form-control.is-invalid {
+  @include form-validation-state("invalid", map.get($colors, "semantic", "error"));
+}
+
+.form-control.is-medical-valid {
+  @include form-validation-state("valid", map.get($colors, "semantic", "success"), true);
+}
+
+.form-control.is-medical-invalid {
+  @include form-validation-state("invalid", map.get($colors, "semantic", "error"), true);
+}
+
+// Form Feedback
+.form-text {
+  display: block;
+  margin-top: map.get($spacing, "xs");
+  font-size: map.get($typography, "font-sizes", "caption");
+  
+  &--helper {
+    color: map.get($colors, "text", "secondary");
+  }
+}
+
+// Form Error Message
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: map.get($spacing, "xs");
+  color: map.get($colors, "semantic", "error");
+  font-size: map.get($typography, "font-sizes", "caption");
+  font-weight: map.get($typography, "font-weights", "medium");
+  margin-top: map.get($spacing, "xs");
+}
+
+// Responsive Adjustments
+@include respond-to("mobile") {
+  .form-control {
+    font-size: map.get($typography, "font-sizes", "body2");
+    height: $form-input-height - 8px;
+  }
+
+  .form-label {
+    font-size: map.get($typography, "font-sizes", "body2");
+  }
+}
+
+// High Contrast & Dark Mode Support
+@media (prefers-contrast: high) {
+  .form-control {
+    border-width: 3px;
+    
+    &--medical-data {
+      border-width: 4px;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .form-control {
+    background-color: rgba(map.get($colors, "background", "paper"), 0.05);
+    border-color: map.get($colors, "border", "dark");
+    color: map.get($colors, "text", "primary");
+
+    &--medical-data {
+      background-color: rgba(map.get($colors, "semantic", "warning"), 0.1);
+    }
+  }
+}

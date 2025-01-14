@@ -1,0 +1,191 @@
+// ==========================================================================
+// Header Component Styles
+// Version: 1.0.0
+// Description: Material Design header implementation with responsive behavior
+// and theme support for MyElixir healthcare data marketplace
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// Main header container
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: map.get($z-index, "header");
+  height: 64px;
+  @include elevation(2);
+  @include theme-aware("background-color", map.get($colors, "background", "default"), map.get($colors, "surface", "main"));
+  @include theme-aware("border-bottom-color", map.get($colors, "border", "light"), rgba(255, 255, 255, 0.1));
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  transition: 
+    background-color map.get($transitions, "duration", "normal") map.get($transitions, "timing", "ease-in-out"),
+    border-color map.get($transitions, "duration", "normal") map.get($transitions, "timing", "ease-in-out");
+  will-change: background-color, border-color;
+
+  @include respond-to("mobile") {
+    height: 56px;
+  }
+}
+
+// Inner container with max-width constraint
+.header__container {
+  max-width: map.get($grid, "container", "wide");
+  margin: 0 auto;
+  padding: 0 map.get($spacing, "lg");
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// Logo section
+.header__logo {
+  height: 40px;
+  width: auto;
+  
+  @include respond-to("mobile") {
+    height: 32px;
+  }
+
+  a {
+    display: block;
+    height: 100%;
+    
+    &:focus {
+      outline: 2px solid map.get($colors, "primary", "main");
+      outline-offset: 2px;
+      border-radius: map.get($border-radius, "small");
+    }
+
+    img {
+      height: 100%;
+      width: auto;
+    }
+  }
+}
+
+// Navigation menu
+.header__nav {
+  display: none;
+  
+  @include respond-to("tablet") {
+    display: flex;
+    align-items: center;
+    gap: map.get($spacing, "md");
+  }
+
+  a {
+    @include typography("body1");
+    @include theme-aware("color", map.get($colors, "text", "primary"), map.get($colors, "text", "secondary"));
+    padding: map.get($spacing, "sm") map.get($spacing, "md");
+    border-radius: map.get($border-radius, "small");
+    text-decoration: none;
+    transition: background-color map.get($transitions, "duration", "fast") map.get($transitions, "timing", "ease-out");
+    
+    &:hover {
+      @include theme-aware("background-color", rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.08));
+    }
+    
+    &:focus {
+      outline: 2px solid map.get($colors, "primary", "main");
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Action buttons container
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: map.get($spacing, "sm");
+
+  button {
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background-color map.get($transitions, "duration", "fast") map.get($transitions, "timing", "ease-out");
+    
+    &:hover {
+      @include theme-aware("background-color", rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.08));
+    }
+    
+    &:focus {
+      outline: 2px solid map.get($colors, "primary", "main");
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Mobile menu button
+.header__menu-button {
+  display: block;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  
+  @include respond-to("tablet") {
+    display: none;
+  }
+
+  &:hover {
+    @include theme-aware("background-color", rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.08));
+  }
+  
+  &:focus {
+    outline: 2px solid map.get($colors, "primary", "main");
+    outline-offset: 2px;
+  }
+
+  // Ensure minimum touch target size for accessibility
+  @media (pointer: coarse) {
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+    }
+  }
+}
+
+// High contrast mode adjustments
+@media (prefers-contrast: high) {
+  .header {
+    border-bottom: 2px solid currentColor;
+    box-shadow: none;
+  }
+
+  .header__nav a,
+  .header__actions button,
+  .header__menu-button {
+    &:focus {
+      outline: 4px solid currentColor;
+      outline-offset: 4px;
+    }
+  }
+}
+
+// Reduced motion preferences
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .header__nav a,
+  .header__actions button,
+  .header__menu-button {
+    transition: none;
+  }
+}

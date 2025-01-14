@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
+  <meta name="theme-color" content="#2196F3">
+  <meta name="description" content="MyElixir - Secure Healthcare Data Marketplace">
+  
+  <!-- Security Headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.myelixir.com;">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+
+  <!-- Open Graph Tags -->
+  <meta property="og:title" content="MyElixir - Healthcare Data Marketplace">
+  <meta property="og:description" content="Secure healthcare data marketplace for managing and monetizing your health records">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MyElixir">
+
+  <!-- PWA Support -->
+  <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+  <link rel="icon" href="/favicon.ico" sizes="32x32 16x16" type="image/x-icon">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <!-- Font Preloading -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link rel="stylesheet" 
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600&display=swap" 
+        media="print" 
+        onload="this.media='all'">
+
+  <!-- Critical CSS -->
+  <style>
+    :root {
+      --md-sys-color-primary: #2196F3;
+      --md-sys-color-surface: #FFFFFF;
+      --md-sys-color-background: #FAFAFA;
+      --md-sys-color-on-surface: #212121;
+    }
+
+    html {
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--md-sys-color-background);
+      color: var(--md-sys-color-on-surface);
+      line-height: 1.5;
+    }
+
+    .noscript-message {
+      padding: 1rem;
+      margin: 1rem;
+      background-color: #FFF3CD;
+      border: 1px solid #FFEEBA;
+      border-radius: 4px;
+      color: #856404;
+    }
+
+    .root-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --md-sys-color-surface: #121212;
+        --md-sys-color-background: #000000;
+        --md-sys-color-on-surface: #FFFFFF;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+
+  <title>MyElixir - Healthcare Data Marketplace</title>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-message" role="alert" aria-live="assertive">
+      You need to enable JavaScript to run this application.
+    </div>
+  </noscript>
+
+  <main id="root" role="main" aria-label="MyElixir Application" class="root-container"></main>
+
+  <!-- Application Entry Point -->
+  <script type="module" src="./src/index.tsx"></script>
+</body>
+</html>

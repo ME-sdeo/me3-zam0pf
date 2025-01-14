@@ -1,0 +1,55 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: myelixir-cluster-role
+  labels:
+    app: myelixir
+    component: rbac
+    environment: production
+    managed-by: kubernetes
+    security-tier: platform
+rules:
+  # Core API resources for basic platform operations
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Workload controllers for application management
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Autoscaling configuration access
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch"]
+
+  # Monitoring resources for observability
+  - apiGroups: ["monitoring.coreos.com"]
+    resources: ["servicemonitors", "prometheusrules"]
+    verbs: ["get", "create", "delete"]
+
+  # Networking resources for ingress and security
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Storage management for persistent data
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses", "persistentvolumes", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+
+  # Batch job management for background processing
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Pod disruption management for high availability
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+
+  # Coordination for leader election and locking
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update"]

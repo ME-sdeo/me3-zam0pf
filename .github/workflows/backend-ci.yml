@@ -1,0 +1,222 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/backend/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/backend/**'
+  workflow_dispatch:
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  WORKING_DIRECTORY: src/backend
+  NODE_VERSION: '18.x'
+  NODE_ENV: test
+  CI: true
+  NPM_CONFIG_AUDIT_LEVEL: moderate
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  checks: write
+
+jobs:
+  install-dependencies:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm ci --prefer-offline --no-audit
+
+  security-scan:
+    name: Security Scan
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/package-lock.json') }}
+
+      - name: Run npm audit
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          npm audit --production --audit-level=moderate
+          npm audit fix --production --only=prod --audit-level=moderate
+
+      - name: Run Security Linting
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run security:scan
+
+      - name: Upload Security Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: ${{ env.WORKING_DIRECTORY }}/security-report.json
+          retention-days: 30
+
+  build:
+    name: Build
+    needs: security-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/package-lock.json') }}
+
+      - name: Build TypeScript
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run build
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          retention-days: 1
+
+  test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      redis:
+        image: redis:6-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mongodb:
+        image: mongo:5
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Restore Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('${{ env.WORKING_DIRECTORY }}/package-lock.json') }}
+
+      - name: Run Unit Tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run test:coverage
+
+      - name: Run Integration Tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run test:integration
+
+      - name: Run Security Tests
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: npm run test:security
+
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: ${{ env.WORKING_DIRECTORY }}/coverage
+          retention-days: 14
+
+      - name: Check Coverage Thresholds
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "Coverage ($COVERAGE%) is below threshold (80%)"
+            exit 1
+          fi
+
+  notify:
+    name: Notify
+    needs: [security-scan, build, test]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check Status
+        id: check
+        run: |
+          if [ "${{ needs.security-scan.result }}" == "success" ] && \
+             [ "${{ needs.build.result }}" == "success" ] && \
+             [ "${{ needs.test.result }}" == "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify on Failure
+        if: steps.check.outputs.status == 'failure'
+        run: |
+          echo "CI pipeline failed!"
+          # Add notification logic here (e.g., Slack, Email)

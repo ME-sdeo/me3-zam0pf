@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - type: bind
+        source: .
+        target: /usr/src/app
+        read_only: true
+      - type: volume
+        source: node_modules
+        target: /usr/src/app/node_modules
+      - type: volume
+        source: logs
+        target: /usr/src/app/logs
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - MONGODB_URI=mongodb://mongo:27017/myelixir
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOG_LEVEL=debug
+      - ENABLE_METRICS=true
+      - METRICS_PORT=9090
+    depends_on:
+      - mongo
+      - redis
+      - prometheus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      - myelixir_network
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - type: volume
+        source: mongodb_data
+        target: /data/db
+      - type: volume
+        source: mongodb_config
+        target: /data/configdb
+      - type: volume
+        source: mongodb_backup
+        target: /data/backup
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/mongo_root_username
+      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/mongo_root_password
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - myelixir_network
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - type: volume
+        source: redis_data
+        target: /data
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - myelixir_network
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - type: bind
+        source: ./prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
+      - type: volume
+        source: prometheus_data
+        target: /prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - myelixir_network
+
+  grafana:
+    image: grafana/grafana:9.5.3
+    ports:
+      - "3001:3000"
+    volumes:
+      - type: volume
+        source: grafana_data
+        target: /var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - myelixir_network
+
+volumes:
+  mongodb_data:
+    name: myelixir_mongodb_data
+  mongodb_config:
+    name: myelixir_mongodb_config
+  mongodb_backup:
+    name: myelixir_mongodb_backup
+  redis_data:
+    name: myelixir_redis_data
+  node_modules:
+    name: myelixir_node_modules
+  logs:
+    name: myelixir_logs
+  prometheus_data:
+    name: myelixir_prometheus_data
+  grafana_data:
+    name: myelixir_grafana_data
+
+networks:
+  myelixir_network:
+    driver: bridge
+    internal: true
+    attachable: true
+    labels:
+      com.myelixir.description: "Secure internal network for MyElixir services"
+
+secrets:
+  mongo_root_username:
+    file: ./secrets/mongo_root_username.txt
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt

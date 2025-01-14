@@ -1,0 +1,173 @@
+name: Infrastructure CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'infrastructure/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'infrastructure/**'
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  id-token: write
+
+env:
+  TF_INPUT: false
+  TF_IN_AUTOMATION: true
+  TF_CLI_ARGS: -no-color
+  TFSEC_ARGS: --minimum-severity HIGH
+  TERRAFORM_VERSION: 1.3.x
+  WORKING_DIRECTORY: infrastructure/terraform
+
+jobs:
+  validate:
+    name: Validate Infrastructure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Cache Terraform
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.WORKING_DIRECTORY }}/.terraform
+            ${{ env.WORKING_DIRECTORY }}/.terraform.lock.hcl
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: Terraform Format Check
+        id: fmt
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          terraform fmt -check -recursive -diff
+        continue-on-error: false
+
+      - name: Terraform Init
+        id: init
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          terraform init -backend=false
+        continue-on-error: false
+
+      - name: Terraform Validate
+        id: validate
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          terraform validate -json | tee validation_result.json
+          if [ "$(jq -r '.valid' validation_result.json)" != "true" ]; then
+            echo "Validation failed"
+            exit 1
+          fi
+        continue-on-error: false
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Run tfsec HIPAA Compliance Scan
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ${{ env.WORKING_DIRECTORY }}
+          additional_args: >
+            ${{ env.TFSEC_ARGS }}
+            --config-file tfsec.config.yml
+            --format sarif
+            --out tfsec-results.sarif
+            --soft-fail true
+            --minimum-severity HIGH
+            --exclude-downloaded-modules
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        if: success() || failure()
+        with:
+          sarif_file: tfsec-results.sarif
+          category: Infrastructure-Security
+
+  compliance-check:
+    name: HIPAA Compliance Check
+    runs-on: ubuntu-latest
+    needs: security-scan
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Verify HIPAA Required Settings
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          # Check encryption settings
+          if ! grep -q "enable_encryption.*=.*true" variables.tf; then
+            echo "ERROR: Encryption must be enabled for HIPAA compliance"
+            exit 1
+          fi
+          
+          # Check audit logging
+          if ! grep -q "enable_audit_logging.*=.*true" variables.tf; then
+            echo "ERROR: Audit logging must be enabled for HIPAA compliance"
+            exit 1
+          fi
+          
+          # Check backup configuration
+          if ! grep -q "enable_backup.*=.*true" variables.tf; then
+            echo "ERROR: Backup must be enabled for HIPAA compliance"
+            exit 1
+          fi
+          
+          # Verify network security settings
+          if ! grep -q "network_policy.*=.*\"azure\"" main.tf; then
+            echo "ERROR: Network policies must be enabled for HIPAA compliance"
+            exit 1
+          fi
+
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    needs: [validate, security-scan, compliance-check]
+    if: always()
+    
+    steps:
+      - name: Check Workflow Status
+        id: check
+        run: |
+          if [ "${{ needs.validate.result }}" == "success" ] && \
+             [ "${{ needs.security-scan.result }}" == "success" ] && \
+             [ "${{ needs.compliance-check.result }}" == "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=Infrastructure CI passed all checks" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "message=Infrastructure CI failed some checks" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Job Summary
+        run: |
+          echo "## Infrastructure CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "* Validation: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "* Security Scan: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "* HIPAA Compliance: ${{ needs.compliance-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Status: ${{ steps.check.outputs.message }}" >> $GITHUB_STEP_SUMMARY

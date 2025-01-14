@@ -1,0 +1,49 @@
+# This file defines code ownership and mandatory review requirements
+# Last matching pattern takes precedence
+# Multiple owners must approve changes
+
+# Root level files require project lead and security team review
+* @project-leads @security-team
+
+# Backend code requires security, compliance and backend team review for HIPAA compliance
+/src/backend/* @backend-team @security-team @compliance-team
+
+# Blockchain implementation requires specialized review
+/src/backend/src/blockchain/* @blockchain-team @security-team @compliance-team
+
+# FHIR integration code requires healthcare data expertise
+/src/backend/src/fhir/* @fhir-team @security-team @compliance-team
+
+# Frontend code requires accessibility compliance
+/src/web/* @frontend-team @accessibility-team
+
+# Infrastructure code requires thorough security review
+/infrastructure/* @devops-team @security-team @compliance-team
+
+# CI/CD workflows require security oversight
+/.github/workflows/* @devops-team @security-team
+
+# Configuration files require extra security scrutiny
+/src/backend/src/config/* @backend-team @security-team @compliance-team
+
+# Test files require QA and security validation
+*.test.ts @qa-team @security-team
+
+# Package dependencies require security review
+package*.json @security-team @compliance-team
+
+# Documentation requires compliance verification
+/docs/* @technical-writers @compliance-team
+
+# Ensure security team reviews all sensitive healthcare data components
+/src/backend/src/services/* @backend-team @security-team @compliance-team
+/src/backend/src/models/* @backend-team @security-team @compliance-team
+/src/backend/src/api/* @backend-team @security-team @compliance-team
+
+# Database schema changes require thorough review
+/src/backend/src/db/* @backend-team @security-team @compliance-team
+
+# Security-critical components require mandatory security team review
+/src/backend/src/auth/* @security-team @compliance-team
+/src/backend/src/encryption/* @security-team @compliance-team
+/infrastructure/security/* @security-team @compliance-team

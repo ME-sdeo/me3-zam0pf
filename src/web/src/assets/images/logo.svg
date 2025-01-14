@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="240" height="60" viewBox="0 0 240 60" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" role="img" aria-label="MyElixir Logo">
+    <title>MyElixir Healthcare Data Marketplace</title>
+    <desc>Logo representing secure healthcare data exchange through modern design elements</desc>
+    
+    <defs>
+        <linearGradient id="primary-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:var(--logo-primary, #2196F3);stop-opacity:1" />
+            <stop offset="100%" style="stop-color:var(--logo-primary, #2196F3);stop-opacity:0.8" />
+        </linearGradient>
+        <linearGradient id="secondary-gradient" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:var(--logo-secondary, #FFC107);stop-opacity:1" />
+            <stop offset="100%" style="stop-color:var(--logo-secondary, #FFC107);stop-opacity:0.8" />
+        </linearGradient>
+    </defs>
+
+    <!-- Main Logo Icon -->
+    <g id="logo-icon" transform="translate(10,10)">
+        <!-- Outer Circle representing security -->
+        <circle cx="20" cy="20" r="18" 
+            fill="none" 
+            stroke="url(#primary-gradient)" 
+            stroke-width="2"
+            stroke-dasharray="4 2"/>
+            
+        <!-- Inner Shield Shape -->
+        <path d="M20 5 
+                 L32 12
+                 L32 22
+                 C32 30
+                 20 35
+                 20 35
+                 C20 35
+                 8 30
+                 8 22
+                 L8 12 Z"
+            fill="url(#primary-gradient)"
+            stroke="none"/>
+            
+        <!-- Data Flow Symbol -->
+        <path d="M16 15
+                 L24 15
+                 L24 18
+                 L28 14
+                 L24 10
+                 L24 13
+                 L16 13 Z"
+            fill="url(#secondary-gradient)"
+            stroke="none"/>
+    </g>
+
+    <!-- Text "MyElixir" -->
+    <g id="logo-text" transform="translate(50,35)">
+        <text font-family="'Roboto', sans-serif" 
+              font-size="24" 
+              font-weight="500"
+              fill="var(--logo-primary, #2196F3)">
+            My<tspan fill="var(--logo-secondary, #FFC107)">Elixir</tspan>
+        </text>
+    </g>
+
+    <!-- Tagline -->
+    <g id="logo-tagline" transform="translate(50,50)">
+        <text font-family="'Roboto', sans-serif"
+              font-size="10"
+              font-weight="300"
+              fill="var(--logo-primary, #2196F3)">
+            Healthcare Data Marketplace
+        </text>
+    </g>
+
+    <style>
+        @media (prefers-color-scheme: dark) {
+            #logo-icon, #logo-text, #logo-tagline {
+                --logo-primary: var(--primary-color-dark, #64B5F6);
+                --logo-secondary: var(--secondary-color-dark, #FFD54F);
+            }
+        }
+    </style>
+</svg>

@@ -1,0 +1,168 @@
+// ==========================================================================
+// Table Component Styles
+// Version: 1.0.0
+// Description: Material Design table implementation with accessibility and responsive features
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// Global variables
+$table-border-color: map-get($colors, "border", "light");
+$table-header-bg: map-get($colors, "surface", "main");
+$table-row-hover-bg: rgba(map-get($colors, "primary", "main"), 0.05);
+$table-transition-duration: map-get($transitions, "duration", "normal");
+$table-header-height: 56px;
+
+// Table Container
+.table-container {
+  position: relative;
+  overflow-x: auto;
+  margin: map-get($spacing, "md") 0;
+  border-radius: map-get($border-radius, "medium");
+  contain: paint;
+  -webkit-overflow-scrolling: touch;
+  
+  @include elevation(1);
+  @include respond-to("mobile") {
+    max-width: 100vw;
+  }
+  
+  @include respond-to("tablet") {
+    max-width: 100%;
+    overflow-x: visible;
+  }
+}
+
+// Base Table
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: map-get($typography, "font-family", "primary");
+  
+  @include theme-aware("background-color", 
+    map-get($colors, "surface", "main"),
+    map-get($colors, "background", "paper")
+  );
+  
+  @include theme-aware("color",
+    map-get($colors, "text", "primary"),
+    map-get($colors, "text", "primary")
+  );
+  
+  transition: 
+    background-color $table-transition-duration map-get($transitions, "timing", "ease-in-out"),
+    box-shadow $table-transition-duration map-get($transitions, "timing", "ease-in-out");
+}
+
+// Table Header
+.table-header {
+  position: sticky;
+  top: 0;
+  z-index: map-get($z-index, "sticky");
+  height: $table-header-height;
+  font-weight: map-get($typography, "font-weights", "medium");
+  will-change: transform;
+  
+  @include theme-aware("background-color",
+    $table-header-bg,
+    darken($table-header-bg, 8%)
+  );
+  
+  th {
+    @extend .table-cell;
+    white-space: nowrap;
+    text-align: start;
+    
+    &[aria-sort] {
+      cursor: pointer;
+      user-select: none;
+      
+      &:hover {
+        @include theme-aware("background-color",
+          map-get($colors, "surface", "hover"),
+          darken(map-get($colors, "surface", "hover"), 8%)
+        );
+      }
+      
+      &:focus-visible {
+        @include focus-ring(map-get($colors, "primary", "main"));
+      }
+    }
+  }
+}
+
+// Table Cell
+.table-cell {
+  padding: map-get($spacing, "sm") map-get($spacing, "md");
+  text-align: start;
+  vertical-align: middle;
+  
+  @include theme-aware("border-bottom",
+    1px solid $table-border-color,
+    1px solid darken($table-border-color, 20%)
+  );
+  
+  @include typography("body2");
+}
+
+// Table Row
+.table-row {
+  transition: 
+    background-color $table-transition-duration map-get($transitions, "timing", "ease-in-out"),
+    box-shadow $table-transition-duration map-get($transitions, "timing", "ease-in-out");
+  outline: none;
+  
+  &:hover {
+    @include theme-aware("background-color",
+      $table-row-hover-bg,
+      darken($table-row-hover-bg, 8%)
+    );
+  }
+  
+  &:focus-visible {
+    @include focus-ring(map-get($colors, "primary", "main"));
+    position: relative;
+  }
+  
+  // Interactive rows
+  &[role="button"] {
+    cursor: pointer;
+    
+    @include interactive-state(map-get($colors, "primary", "main"), "hover");
+    
+    &:active {
+      @include theme-aware("background-color",
+        darken($table-row-hover-bg, 5%),
+        darken($table-row-hover-bg, 12%)
+      );
+    }
+  }
+}
+
+// Accessibility Enhancements
+@media screen and (prefers-reduced-motion: reduce) {
+  .table,
+  .table-row {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .table {
+    border: 1px solid CanvasText;
+  }
+  
+  .table-cell {
+    border-color: CanvasText;
+  }
+  
+  .table-row {
+    &:hover,
+    &:focus-visible {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
+  }
+}

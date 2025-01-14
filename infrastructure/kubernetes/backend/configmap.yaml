@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: production
+  labels:
+    app: myelixir
+    component: backend
+    environment: production
+data:
+  # Node.js Environment Settings
+  NODE_ENV: "production"
+  PORT: "3000"
+  HOST: "0.0.0.0"
+  
+  # API Configuration
+  API_VERSION: "v1"
+  API_PREFIX: "/api"
+  API_TIMEOUT: "30000"
+  
+  # Pagination Settings
+  PAGINATION_DEFAULT_LIMIT: "10"
+  PAGINATION_MAX_LIMIT: "100"
+  
+  # FHIR Configuration
+  FHIR_VERSION: "4.0.1"
+  FHIR_VALIDATION_ENABLED: "true"
+  FHIR_MAX_RESOURCE_SIZE: "5mb"
+  
+  # CORS Settings
+  CORS_ALLOWED_ORIGINS: "https://*.myelixir.com"
+  CORS_MAX_AGE: "86400"
+  
+  # Rate Limiting
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "1000"
+  
+  # Compression Settings
+  COMPRESSION_LEVEL: "6"
+  COMPRESSION_THRESHOLD: "1kb"
+  
+  # Logging Configuration
+  LOG_LEVEL: "info"
+  LOGGING_FORMAT: "json"
+  HTTP_LOGGER_ENABLED: "true"
+  HTTP_LOGGER_EXCLUDE_PATHS: "/health,/metrics"
+  
+  # Application Insights Monitoring
+  APP_INSIGHTS_ENABLED: "true"
+  APP_INSIGHTS_SAMPLING_RATE: "100"
+  APP_INSIGHTS_CLOUD_ROLE: "backend-api"
+  
+  # Prometheus Metrics
+  METRICS_ENABLED: "true"
+  METRICS_PATH: "/metrics"
+  METRICS_DEFAULT_SERVICE: "myelixir-backend"
+  
+  # Health Check Configuration
+  HEALTH_CHECK_ENABLED: "true"
+  HEALTH_CHECK_PATH: "/health"
+  HEALTH_CHECK_TIMEOUT: "5000"

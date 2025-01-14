@@ -1,0 +1,70 @@
+node_modules
+npm-debug.log*
+
+# Version control
+.git
+.gitignore
+
+# Build outputs
+dist
+coverage
+*.log
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+*.cert
+
+# Development files
+tests
+**/*.test.ts
+**/*.spec.ts
+jest.config.js
+.eslintrc*
+.prettierrc*
+tsconfig.json
+*.config.js
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+README.md
+CHANGELOG.md
+docs
+
+# Docker files
+.dockerignore
+Dockerfile*
+
+# Temporary files
+.DS_Store
+*.tmp
+*.temp
+.cache
+
+# Debug files
+.clinic
+.nyc_output
+*.heapsnapshot
+
+# Development tools
+nodemon.json
+.editorconfig
+.huskyrc
+.lintstagedrc
+
+# Dependency lock files (installed fresh in container)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# HIPAA/GDPR sensitive files
+**/credentials/*
+**/secrets/*
+**/private/*

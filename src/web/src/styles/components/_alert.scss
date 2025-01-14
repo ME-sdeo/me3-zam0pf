@@ -1,0 +1,179 @@
+// ==========================================================================
+// Alert Component Styles
+// Version: 1.0.0
+// Description: Material Design 3.0 alert patterns with accessibility support
+// ==========================================================================
+
+@import '../utils/variables';
+@import '../utils/mixins';
+
+// Variables
+$alert-padding: map.get($spacing, "md");
+$alert-border-radius: map.get($border-radius, "medium");
+$alert-font-size: map.get($typography, "font-sizes", "body1");
+$alert-transition: all map.get($transitions, "duration", "normal") map.get($transitions, "timing", "ease-in-out");
+$alert-stack-spacing: map.get($spacing, "sm");
+
+// Function to get alert colors based on severity
+@function get-alert-color($severity) {
+  $colors: (
+    success: map.get($colors, "semantic", "success"),
+    warning: map.get($colors, "semantic", "warning"),
+    error: map.get($colors, "semantic", "error"),
+    info: map.get($colors, "semantic", "info")
+  );
+  @return map.get($colors, $severity);
+}
+
+// Base alert styles
+.alert {
+  display: flex;
+  align-items: center;
+  padding: $alert-padding;
+  border-radius: $alert-border-radius;
+  font-size: $alert-font-size;
+  line-height: map.get($typography, "line-heights", "normal");
+  font-family: map.get($typography, "font-family", "primary");
+  transition: $alert-transition;
+  margin-bottom: $alert-stack-spacing;
+  position: relative;
+  
+  @include elevation(1);
+  @include theme-aware(
+    "background-color",
+    map.get($colors, "surface", "main"),
+    darken(map.get($colors, "surface", "main"), 10%)
+  );
+
+  // Ensure proper spacing on mobile
+  @include respond-to("mobile") {
+    padding: map.get($spacing, "sm");
+  }
+}
+
+// Severity variants
+.alert--success {
+  background-color: rgba(get-alert-color("success"), 0.1);
+  border: 1px solid get-alert-color("success");
+  color: get-alert-color("success");
+}
+
+.alert--warning {
+  background-color: rgba(get-alert-color("warning"), 0.1);
+  border: 1px solid get-alert-color("warning");
+  color: get-alert-color("warning");
+}
+
+.alert--error {
+  background-color: rgba(get-alert-color("error"), 0.1);
+  border: 1px solid get-alert-color("error");
+  color: get-alert-color("error");
+}
+
+.alert--info {
+  background-color: rgba(get-alert-color("info"), 0.1);
+  border: 1px solid get-alert-color("info");
+  color: get-alert-color("info");
+}
+
+// Alert icon
+.alert__icon {
+  margin-right: map.get($spacing, "sm");
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+}
+
+// Alert message
+.alert__message {
+  flex-grow: 1;
+  font-weight: map.get($typography, "font-weights", "medium");
+  overflow-wrap: break-word;
+  min-width: 0;
+
+  // Ensure proper text contrast
+  @media (prefers-contrast: high) {
+    font-weight: map.get($typography, "font-weights", "bold");
+  }
+}
+
+// Close button
+.alert__close {
+  margin-left: map.get($spacing, "sm");
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: map.get($spacing, "xs");
+  color: inherit;
+  opacity: 0.8;
+  transition: opacity map.get($transitions, "duration", "fast") 
+              map.get($transitions, "timing", "ease-out");
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &:focus {
+    opacity: 1;
+    outline: none;
+  }
+
+  @include focus-ring(currentColor);
+
+  // Enhanced touch target for mobile
+  @include respond-to("mobile") {
+    padding: map.get($spacing, "sm");
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+  }
+}
+
+// Accessibility enhancements
+.alert[role="alert"] {
+  &:focus {
+    outline: none;
+  }
+
+  @include focus-ring(currentColor);
+}
+
+// Animation support
+.alert--enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.alert--enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity map.get($transitions, "duration", "normal") 
+              map.get($transitions, "timing", "ease-out"),
+              transform map.get($transitions, "duration", "normal") 
+              map.get($transitions, "timing", "ease-out");
+}
+
+.alert--exit {
+  opacity: 1;
+}
+
+.alert--exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity map.get($transitions, "duration", "fast") 
+              map.get($transitions, "timing", "ease-in"),
+              transform map.get($transitions, "duration", "fast") 
+              map.get($transitions, "timing", "ease-in");
+}

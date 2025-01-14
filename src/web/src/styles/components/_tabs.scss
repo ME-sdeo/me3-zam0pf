@@ -1,0 +1,190 @@
+// ==========================================================================
+// Tabs Component
+// Version: 1.0.0
+// Description: Material Design 3.0 compliant tab component with accessibility
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// ==========================================================================
+// Variables
+// ==========================================================================
+
+$tab-height-mobile: 44px;
+$tab-height-desktop: 48px;
+$tab-min-touch-target: 44px;
+$tab-border-radius: map-get($border-radius, 'small');
+$tab-transition-duration: map-get($transitions, 'duration', 'normal');
+
+// ==========================================================================
+// Functions
+// ==========================================================================
+
+@function calculate-tab-width($container-width, $tab-count) {
+  $base-width: math.div($container-width, $tab-count);
+  $min-width: $tab-min-touch-target;
+  @return max($base-width, $min-width);
+}
+
+// ==========================================================================
+// Tab Container
+// ==========================================================================
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  min-height: $tab-height-mobile;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--tab-border-color);
+  
+  @include theme-aware('background-color', map-get($colors, 'background', 'default'), map-get($colors, 'background', 'paper'));
+  
+  // Accessibility
+  role: tablist;
+  aria-orientation: horizontal;
+
+  @include respond-to('tablet') {
+    min-height: $tab-height-desktop;
+  }
+}
+
+// ==========================================================================
+// Individual Tab
+// ==========================================================================
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: $tab-min-touch-target;
+  min-height: $tab-min-touch-target;
+  padding: map-get($spacing, 'sm') map-get($spacing, 'md');
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  background: none;
+  
+  // Typography
+  @include typography('body2');
+  @include theme-aware('color', map-get($colors, 'text', 'primary'), map-get($colors, 'text', 'primary'));
+  
+  // Transitions
+  transition: 
+    color $tab-transition-duration map-get($transitions, 'timing', 'ease-in-out'),
+    background-color $tab-transition-duration map-get($transitions, 'timing', 'ease-in-out'),
+    border-color $tab-transition-duration map-get($transitions, 'timing', 'ease-in-out');
+
+  // Interactive States
+  @include interactive-state(map-get($colors, 'primary', 'main'), 'hover');
+  
+  // Accessibility
+  role: tab;
+  aria-selected: false;
+  
+  // Focus States
+  @include focus-ring(map-get($colors, 'primary', 'main'));
+  
+  @include respond-to('tablet') {
+    padding: map-get($spacing, 'md') map-get($spacing, 'lg');
+    @include typography('body1');
+  }
+}
+
+// ==========================================================================
+// Tab States
+// ==========================================================================
+
+.tab--active {
+  @include theme-aware('color', map-get($colors, 'primary', 'main'), map-get($colors, 'primary', 'light'));
+  font-weight: map-get($typography, 'font-weights', 'medium');
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    @include theme-aware('background-color', map-get($colors, 'primary', 'main'), map-get($colors, 'primary', 'light'));
+  }
+  
+  // Accessibility
+  aria-selected: true;
+}
+
+.tab--disabled {
+  @include theme-aware('color', map-get($colors, 'text', 'disabled'), map-get($colors, 'text', 'disabled'));
+  pointer-events: none;
+  cursor: not-allowed;
+  
+  // Accessibility
+  aria-disabled: true;
+}
+
+// ==========================================================================
+// High Contrast Mode Support
+// ==========================================================================
+
+@media (prefers-contrast: high) {
+  .tabs {
+    border-bottom: 2px solid currentColor;
+  }
+  
+  .tab {
+    border: 2px solid currentColor;
+    margin: 2px;
+    
+    &:focus-visible {
+      outline: 4px solid currentColor;
+      outline-offset: 2px;
+    }
+  }
+  
+  .tab--active {
+    background-color: currentColor;
+    color: var(--color-high-contrast-text);
+    
+    &::after {
+      display: none;
+    }
+  }
+}
+
+// ==========================================================================
+// RTL Support
+// ==========================================================================
+
+[dir="rtl"] {
+  .tabs {
+    flex-direction: row-reverse;
+  }
+  
+  .tab--active::after {
+    right: 0;
+    left: auto;
+  }
+}
+
+// ==========================================================================
+// Reduced Motion Support
+// ==========================================================================
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+    
+    &::after {
+      transition: none;
+    }
+  }
+}

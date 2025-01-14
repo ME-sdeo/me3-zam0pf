@@ -1,0 +1,215 @@
+// ==========================================================================
+// Dropdown Component Styles
+// Version: 1.0.0
+// Description: Material Design 3.0 compliant dropdown styles with healthcare-specific
+// enhancements for accessibility and data sensitivity indicators
+// ==========================================================================
+
+@import '../utils/variables';
+@import '../utils/mixins';
+
+// Base dropdown container
+.dropdown {
+  position: relative;
+  display: inline-block;
+  min-width: 240px;
+  user-select: none;
+}
+
+// Dropdown trigger button
+.dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: map.get($spacing, "sm");
+  padding: map.get($spacing, "md");
+  min-height: 48px; // Enhanced touch target for accessibility
+  width: 100%;
+  border: 1px solid map.get($colors, "border", "light");
+  border-radius: map.get($border-radius, "medium");
+  background-color: map.get($colors, "surface", "main");
+  color: map.get($colors, "text", "primary");
+  cursor: pointer;
+  
+  @include theme-aware("background-color", 
+    map.get($colors, "surface", "main"),
+    map.get($colors, "surface", "hover")
+  );
+  
+  @include focus-ring(map.get($colors, "primary", "main"));
+  
+  &:hover {
+    @include theme-aware("background-color", 
+      map.get($colors, "surface", "hover"),
+      map.get($colors, "surface", "selected")
+    );
+  }
+
+  // Icon alignment
+  .dropdown__trigger-icon {
+    transition: transform map.get($transitions, "duration", "fast")
+                map.get($transitions, "timing", "ease-out");
+  }
+
+  &[aria-expanded="true"] {
+    .dropdown__trigger-icon {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// Dropdown menu container
+.dropdown__menu {
+  position: absolute;
+  top: calc(100% + #{map.get($spacing, "xs")});
+  left: 0;
+  min-width: 240px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: map.get($spacing, "xs") 0;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-8px);
+  
+  @include theme-aware("background-color", 
+    map.get($colors, "surface", "main"),
+    map.get($colors, "surface", "hover")
+  );
+  
+  @include elevation(4, map.get($z-index, "dropdown"));
+  
+  border-radius: map.get($border-radius, "medium");
+  transform-origin: top;
+  will-change: transform, opacity;
+
+  // Scrollbar styling
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: map.get($colors, "border", "medium");
+    border-radius: map.get($border-radius, "pill");
+  }
+}
+
+// Dropdown menu item
+.dropdown__item {
+  display: flex;
+  align-items: center;
+  min-height: 48px; // Enhanced touch target
+  padding: map.get($spacing, "sm") map.get($spacing, "md");
+  width: 100%;
+  text-decoration: none;
+  cursor: pointer;
+
+  @include theme-aware("color", 
+    map.get($colors, "text", "primary"),
+    map.get($colors, "text", "secondary")
+  );
+
+  @include focus-ring(map.get($colors, "primary", "main"));
+
+  &:hover {
+    @include theme-aware("background-color", 
+      map.get($colors, "surface", "hover"),
+      map.get($colors, "surface", "selected")
+    );
+  }
+
+  // Icon spacing if present
+  .dropdown__item-icon {
+    margin-right: map.get($spacing, "sm");
+  }
+}
+
+// State modifiers
+.dropdown__menu--open {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  animation: dropdown-fade 0.2s map.get($transitions, "timing", "ease-out");
+}
+
+// Healthcare-specific modifiers
+.dropdown__item--sensitive {
+  @include theme-aware("background-color",
+    rgba(map.get($colors, "semantic", "error"), 0.1),
+    rgba(map.get($colors, "semantic", "error"), 0.2)
+  );
+  
+  @include theme-aware("color",
+    map.get($colors, "semantic", "error"),
+    lighten(map.get($colors, "semantic", "error"), 10%)
+  );
+  
+  font-weight: map.get($typography, "font-weights", "medium");
+
+  &::before {
+    content: "🔒";
+    margin-right: map.get($spacing, "xs");
+  }
+}
+
+.dropdown__item--warning {
+  @include theme-aware("background-color",
+    rgba(map.get($colors, "semantic", "warning"), 0.1),
+    rgba(map.get($colors, "semantic", "warning"), 0.2)
+  );
+  
+  @include theme-aware("color",
+    map.get($colors, "semantic", "warning"),
+    lighten(map.get($colors, "semantic", "warning"), 10%)
+  );
+  
+  font-weight: map.get($typography, "font-weights", "medium");
+
+  &::before {
+    content: "⚠️";
+    margin-right: map.get($spacing, "xs");
+  }
+}
+
+// Animations
+@keyframes dropdown-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive adjustments
+@include respond-to("mobile") {
+  .dropdown__menu {
+    max-width: calc(100vw - #{map.get($spacing, "lg")});
+  }
+}
+
+// High contrast mode adjustments
+@media (prefers-contrast: high) {
+  .dropdown__trigger,
+  .dropdown__item {
+    border: 2px solid currentColor;
+  }
+
+  .dropdown__item--sensitive,
+  .dropdown__item--warning {
+    border-width: 3px;
+  }
+}
+
+// Reduced motion preferences
+@media (prefers-reduced-motion: reduce) {
+  .dropdown__menu {
+    transition: none;
+    animation: none;
+  }
+}

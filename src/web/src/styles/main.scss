@@ -1,0 +1,227 @@
+// ==========================================================================
+// MyElixir Healthcare Data Marketplace - Main Stylesheet
+// Version: 1.0.0
+// Description: Core styles implementing Material Design with healthcare optimizations
+// ==========================================================================
+
+// External Dependencies
+@import 'normalize.css/normalize.css'; // v8.0.1
+
+// Internal Dependencies
+@import 'utils/variables';
+@import 'utils/mixins';
+
+// ==========================================================================
+// Global Reset & Base Styles
+// ==========================================================================
+
+html {
+  box-sizing: border-box;
+  font-size: 16px;
+  font-family: map.get($typography, "font-family", "primary");
+  line-height: map.get($typography, "line-heights", "normal");
+  @include theme-aware("color", map.get($colors, "text", "primary"), map.get($colors, "text", "primary"));
+  @include theme-aware("background-color", map.get($colors, "background", "default"), #121212);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+  margin: 0;
+  padding: 0;
+  min-touch-target-size: 44px; // WCAG 2.1 touch target size
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-adjust: exact;
+  forced-color-adjust: none;
+}
+
+// ==========================================================================
+// Theme System
+// ==========================================================================
+
+:root {
+  // Primary Colors
+  --color-primary: #{map.get($colors, "primary", "main")};
+  --color-primary-light: #{map.get($colors, "primary", "light")};
+  --color-primary-dark: #{map.get($colors, "primary", "dark")};
+  
+  // Medical State Colors
+  --color-critical: #{map.get($colors, "semantic", "error")};
+  --color-warning: #{map.get($colors, "semantic", "warning")};
+  --color-stable: #{map.get($colors, "semantic", "success")};
+  --color-info: #{map.get($colors, "semantic", "info")};
+  
+  // Surface Colors
+  --surface-main: #{map.get($colors, "surface", "main")};
+  --surface-hover: #{map.get($colors, "surface", "hover")};
+  --surface-selected: #{map.get($colors, "surface", "selected")};
+  
+  // Typography
+  --font-family-primary: #{map.get($typography, "font-family", "primary")};
+  --font-family-secondary: #{map.get($typography, "font-family", "secondary")};
+}
+
+// Dark Theme Overrides
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-main: #121212;
+    --surface-hover: #1E1E1E;
+    --surface-selected: #2C2C2C;
+  }
+}
+
+// High Contrast Mode
+@media (prefers-contrast: high) {
+  :root {
+    --color-primary: #0000EE;
+    --color-critical: #FF0000;
+    --color-warning: #FFA500;
+    --color-stable: #008000;
+    --surface-main: #FFFFFF;
+    --surface-hover: #000000;
+    --surface-selected: #0000EE;
+  }
+}
+
+// ==========================================================================
+// Utility Classes
+// ==========================================================================
+
+// Spacing Utilities
+@each $key, $value in $spacing {
+  .m-#{$key} { margin: $value; }
+  .mt-#{$key} { margin-top: $value; }
+  .mb-#{$key} { margin-bottom: $value; }
+  .ml-#{$key} { margin-left: $value; }
+  .mr-#{$key} { margin-right: $value; }
+  
+  .p-#{$key} { padding: $value; }
+  .pt-#{$key} { padding-top: $value; }
+  .pb-#{$key} { padding-bottom: $value; }
+  .pl-#{$key} { padding-left: $value; }
+  .pr-#{$key} { padding-right: $value; }
+}
+
+// Typography Utilities
+@each $variant, $size in map.get($typography, "font-sizes") {
+  .text-#{$variant} {
+    @include typography($variant);
+  }
+}
+
+// Medical State Indicators
+.state-critical {
+  color: var(--color-critical);
+  font-weight: map.get($typography, "font-weights", "bold");
+  
+  &::before {
+    content: "⚠";
+    margin-right: map.get($spacing, "xs");
+  }
+}
+
+.state-warning {
+  color: var(--color-warning);
+  font-weight: map.get($typography, "font-weights", "medium");
+}
+
+.state-stable {
+  color: var(--color-stable);
+}
+
+.state-info {
+  color: var(--color-info);
+}
+
+// Accessibility Utilities
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.focus-visible {
+  @include focus-ring(var(--color-primary));
+}
+
+// ==========================================================================
+// Responsive Layout
+// ==========================================================================
+
+.container {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: map.get($spacing, "md");
+  padding-left: map.get($spacing, "md");
+  
+  @include respond-to("mobile") {
+    max-width: map.get($grid, "container", "mobile");
+  }
+  
+  @include respond-to("tablet") {
+    max-width: map.get($grid, "container", "tablet");
+  }
+  
+  @include respond-to("desktop") {
+    max-width: map.get($grid, "container", "desktop");
+  }
+  
+  @include respond-to("wide") {
+    max-width: map.get($grid, "container", "wide");
+  }
+}
+
+// Grid System
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: map.get($grid, "gutter");
+}
+
+// ==========================================================================
+// Print Styles
+// ==========================================================================
+
+@media print {
+  html {
+    font-size: 12pt;
+  }
+  
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  // Ensure medical state indicators are visible in print
+  .state-critical,
+  .state-warning,
+  .state-stable,
+  .state-info {
+    color: #000 !important;
+    font-weight: bold;
+    
+    &::before {
+      content: "[" attr(class) "]";
+      margin-right: 0.5em;
+    }
+  }
+}

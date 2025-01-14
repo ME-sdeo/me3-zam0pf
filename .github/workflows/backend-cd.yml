@@ -1,0 +1,211 @@
+name: Backend Continuous Deployment
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+  deployments: write
+  security-events: write
+
+env:
+  WORKING_DIRECTORY: src/backend
+  AZURE_CONTAINER_REGISTRY: myelixir.azurecr.io
+  IMAGE_NAME: myelixir/backend
+  CANARY_PERCENTAGE: 20
+  HEALTH_CHECK_RETRIES: 5
+  DEPLOYMENT_TIMEOUT: 600
+
+jobs:
+  validate:
+    name: Validate Security & Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI Workflow Status
+        id: ci-check
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { workflow_run } = context.payload;
+            if (workflow_run && workflow_run.conclusion !== 'success') {
+              core.setFailed('CI workflow must pass before deployment');
+            }
+
+      - name: Verify Security Scan Results
+        id: security-scan
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const scanResults = context.payload.workflow_run.artifacts
+              .find(a => a.name === 'security-scan-results');
+            if (!scanResults || scanResults.failed_checks > 0) {
+              core.setFailed('Security scan must pass before deployment');
+            }
+
+  deploy-canary:
+    name: Deploy Canary
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.AZURE_CONTAINER_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.WORKING_DIRECTORY }}
+          push: true
+          tags: ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            HIPAA_COMPLIANCE_KEY=${{ secrets.HIPAA_COMPLIANCE_KEY }}
+          labels: |
+            com.myelixir.git.sha=${{ github.sha }}
+            com.myelixir.compliance=hipaa-gdpr
+            org.opencontainers.image.created=${{ steps.date.outputs.date }}
+            org.opencontainers.image.version=${{ github.sha }}
+
+      - name: Deploy Canary
+        uses: azure/k8s-deploy@v4
+        with:
+          namespace: production
+          manifests: |
+            infrastructure/kubernetes/backend/deployment.yaml
+          images: |
+            ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          strategy: canary
+          percentage: ${{ env.CANARY_PERCENTAGE }}
+          traffic-split-method: pod
+          action: deploy
+          timeout: ${{ env.DEPLOYMENT_TIMEOUT }}
+
+      - name: Monitor Canary Health
+        id: health-check
+        run: |
+          for i in $(seq 1 ${{ env.HEALTH_CHECK_RETRIES }}); do
+            response=$(curl -s -o /dev/null -w "%{http_code}" https://api.myelixir.com/health)
+            if [ "$response" == "200" ]; then
+              echo "Canary health check passed"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "Canary health check failed"
+          exit 1
+
+  promote-to-production:
+    name: Promote to Production
+    needs: deploy-canary
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+
+      - name: Promote Canary
+        uses: azure/k8s-deploy@v4
+        with:
+          namespace: production
+          manifests: |
+            infrastructure/kubernetes/backend/deployment.yaml
+          images: |
+            ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          strategy: canary
+          percentage: 100
+          traffic-split-method: pod
+          action: promote
+          timeout: ${{ env.DEPLOYMENT_TIMEOUT }}
+
+      - name: Verify Production Health
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://api.myelixir.com/health)
+          if [ "$response" != "200" ]; then
+            echo "Production health check failed"
+            exit 1
+          fi
+
+      - name: Log Deployment
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          name: backend-deployment-logs
+          logs: |
+            Deployment SHA: ${{ github.sha }}
+            Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            Status: Completed
+            Compliance: HIPAA-validated
+
+  rollback:
+    name: Rollback on Failure
+    needs: [deploy-canary, promote-to-production]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v3
+        with:
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+
+      - name: Rollback Deployment
+        uses: azure/k8s-deploy@v4
+        with:
+          namespace: production
+          manifests: |
+            infrastructure/kubernetes/backend/deployment.yaml
+          images: |
+            ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:stable
+          strategy: canary
+          percentage: 100
+          traffic-split-method: pod
+          action: reject
+          timeout: ${{ env.DEPLOYMENT_TIMEOUT }}
+
+      - name: Log Rollback
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          name: backend-deployment-logs
+          logs: |
+            Rollback SHA: ${{ github.sha }}
+            Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            Status: Rolled Back
+            Reason: Deployment failure

@@ -1,0 +1,30 @@
+# ClusterRoleBinding for MyElixir platform RBAC
+# Version: v1
+# Last Updated: 2024-01-20
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: myelixir-cluster-role-binding
+  labels:
+    app: myelixir
+    component: rbac
+    environment: production
+    managed-by: kubernetes
+    security-tier: platform
+  annotations:
+    description: "Binds MyElixir service account to cluster role for platform operations"
+    security.myelixir.com/audit-required: "true"
+    security.myelixir.com/last-reviewed: "2024-01-20"
+
+# Reference to the ClusterRole that defines the permissions
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: myelixir-cluster-role
+
+# ServiceAccount subjects that will be granted the permissions
+subjects:
+- kind: ServiceAccount
+  name: myelixir-service-account
+  namespace: default
+  apiGroup: ""

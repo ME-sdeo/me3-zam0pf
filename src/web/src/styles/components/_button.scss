@@ -1,0 +1,178 @@
+// ==========================================================================
+// Button Component Styles
+// Version: 1.0.0
+// Description: Core button component implementing Material Design principles
+// with healthcare-specific enhancements and accessibility features
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// Base button dimensions and properties
+$button-height: 48px; // Enhanced touch target for medical device compatibility
+$button-padding: map.get($spacing, "md") map.get($spacing, "lg");
+$button-border-radius: map.get($border-radius, "medium");
+$button-focus-ring-width: 3px;
+$button-loading-transition: all map.get($transitions, "duration", "normal") 
+                              map.get($transitions, "timing", "ease-in-out");
+
+// Button variant generator
+@mixin generate-button-variant($variant-name, $bg-color, $text-color, $is-critical: false) {
+  .button--#{$variant-name} {
+    @include theme-aware('background-color', $bg-color, darken($bg-color, 10%));
+    @include theme-aware('color', $text-color, lighten($text-color, 10%));
+    
+    @if $is-critical {
+      font-weight: map.get($typography, "font-weights", "bold");
+      
+      &::before {
+        content: "!";
+        display: inline-block;
+        margin-right: map.get($spacing, "xs");
+        font-weight: bold;
+      }
+    }
+
+    &:hover:not(:disabled) {
+      @include elevation(2);
+      background-color: darken($bg-color, 5%);
+    }
+
+    &:active:not(:disabled) {
+      @include elevation(1);
+      background-color: darken($bg-color, 10%);
+    }
+
+    &:disabled {
+      background-color: map.get($colors, "background", "disabled");
+      color: map.get($colors, "text", "disabled");
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Base button styles
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: $button-height;
+  min-width: $button-height;
+  padding: $button-padding;
+  border: none;
+  border-radius: $button-border-radius;
+  font-family: map.get($typography, "font-family", "primary");
+  font-size: map.get($typography, "font-sizes", "body1");
+  font-weight: map.get($typography, "font-weights", "medium");
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: $button-loading-transition;
+  position: relative;
+  overflow: hidden;
+  
+  @include elevation(1);
+  @include focus-ring(map.get($colors, "primary", "main"));
+
+  // Ensure adequate touch target size
+  @media (pointer: coarse) {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  // High contrast mode adjustments
+  @media (prefers-contrast: high) {
+    border: 2px solid currentColor;
+  }
+}
+
+// Generate button variants
+@include generate-button-variant(
+  "primary",
+  map.get($colors, "primary", "main"),
+  map.get($colors, "primary", "contrast")
+);
+
+@include generate-button-variant(
+  "secondary",
+  map.get($colors, "secondary", "main"),
+  map.get($colors, "secondary", "contrast")
+);
+
+@include generate-button-variant(
+  "critical",
+  map.get($colors, "semantic", "error"),
+  #FFFFFF,
+  true
+);
+
+// Loading state
+.button--loading {
+  opacity: 0.8;
+  pointer-events: none;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: button-loading-spinner 0.8s linear infinite;
+  }
+}
+
+// Consent required state
+.button--consent-required {
+  border: 2px solid map.get($colors, "semantic", "warning");
+  
+  &::before {
+    content: "⚠";
+    display: inline-block;
+    margin-right: map.get($spacing, "xs");
+    color: map.get($colors, "semantic", "warning");
+  }
+}
+
+// Icon support
+.button__icon {
+  display: inline-flex;
+  margin-right: map.get($spacing, "xs");
+  
+  &--right {
+    margin-right: 0;
+    margin-left: map.get($spacing, "xs");
+  }
+}
+
+// Loading animation
+@keyframes button-loading-spinner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive adjustments
+@include respond-to("mobile") {
+  .button--full-width {
+    width: 100%;
+  }
+}
+
+// Accessibility enhancements
+.button:focus-visible {
+  outline: $button-focus-ring-width solid map.get($colors, "primary", "main");
+  outline-offset: 2px;
+}
+
+// Export button styles
+:export {
+  buttonHeight: $button-height;
+  buttonPadding: $button-padding;
+  buttonBorderRadius: $button-border-radius;
+  buttonFocusRingWidth: $button-focus-ring-width;
+}

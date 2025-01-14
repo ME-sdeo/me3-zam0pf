@@ -1,0 +1,195 @@
+// ==========================================================================
+// Dialog Component Styles
+// Version: 1.0.0
+// Implements Material Design 3.0 principles with WCAG 2.1 Level AA compliance
+// ==========================================================================
+
+@use '../utils/variables' as *;
+
+// Mixins
+// ==========================================================================
+
+@mixin dialog-size($size) {
+  @if $size == 'small' {
+    width: 400px;
+    max-width: calc(100vw - #{map-get($spacing, lg)} * 2);
+  } @else if $size == 'medium' {
+    width: 600px;
+    max-width: calc(100vw - #{map-get($spacing, lg)} * 2);
+  } @else if $size == 'large' {
+    width: 800px;
+    max-width: calc(100vw - #{map-get($spacing, lg)} * 2);
+  }
+
+  @media (max-width: map-get($breakpoints, mobile)) {
+    width: calc(100vw - #{map-get($spacing, md)} * 2);
+    max-height: calc(100vh - #{map-get($spacing, lg)} * 2);
+  }
+}
+
+@mixin dialog-animation($direction: 'up') {
+  $transform-origin: if($direction == 'up', 'bottom', 'top');
+  
+  transform-origin: center $transform-origin;
+  will-change: transform, opacity;
+  transition: 
+    transform map-get(map-get($transitions, duration), normal) map-get(map-get($transitions, timing), ease-out),
+    opacity map-get(map-get($transitions, duration), normal) map-get(map-get($transitions, timing), ease-out);
+
+  &[aria-hidden='true'] {
+    opacity: 0;
+    transform: translateY(if($direction == 'up', 20px, -20px));
+  }
+
+  &[aria-hidden='false'] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Dialog Overlay
+// ==========================================================================
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: map-get($z-index, overlay);
+  background-color: rgba(map-get(map-get($colors, text), primary), 0.5);
+  backdrop-filter: blur(4px);
+  
+  // Accessibility
+  @media (prefers-reduced-motion: reduce) {
+    backdrop-filter: none;
+  }
+}
+
+// Dialog Container
+// ==========================================================================
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: map-get($z-index, modal);
+  background-color: map-get(map-get($colors, background), default);
+  border-radius: map-get($border-radius, large);
+  box-shadow: map-get($shadows, high);
+  
+  // Accessibility
+  outline: none;
+  @include dialog-animation('up');
+  
+  // Focus visible styles
+  &:focus-visible {
+    box-shadow: map-get($shadows, focus);
+  }
+
+  // High contrast mode support
+  @media (forced-colors: active) {
+    border: 2px solid ButtonText;
+  }
+}
+
+// Dialog Header
+// ==========================================================================
+
+.dialog-header {
+  padding: map-get($spacing, lg);
+  border-bottom: 1px solid map-get(map-get($colors, border), light);
+  
+  h2 {
+    margin: 0;
+    font-family: map-get(map-get($typography, font-family), primary);
+    font-size: map-get(map-get($typography, font-sizes), h2);
+    font-weight: map-get(map-get($typography, font-weights), medium);
+    color: map-get(map-get($colors, text), primary);
+    line-height: map-get(map-get($typography, line-heights), tight);
+  }
+}
+
+// Dialog Content
+// ==========================================================================
+
+.dialog-content {
+  padding: map-get($spacing, lg);
+  overflow-y: auto;
+  max-height: calc(100vh - #{map-get($spacing, xxl)} * 2);
+  
+  // Touch optimization
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  
+  @media (max-width: map-get($breakpoints, mobile)) {
+    max-height: calc(100vh - #{map-get($spacing, xl)} * 2);
+  }
+}
+
+// Dialog Body
+// ==========================================================================
+
+.dialog-body {
+  font-family: map-get(map-get($typography, font-family), primary);
+  font-size: map-get(map-get($typography, font-sizes), body1);
+  line-height: map-get(map-get($typography, line-heights), normal);
+  color: map-get(map-get($colors, text), primary);
+}
+
+// Dialog Footer
+// ==========================================================================
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: map-get($spacing, md);
+  padding: map-get($spacing, lg);
+  border-top: 1px solid map-get(map-get($colors, border), light);
+  
+  // Responsive button layout
+  @media (max-width: map-get($breakpoints, mobile)) {
+    flex-direction: column-reverse;
+    gap: map-get($spacing, sm);
+    
+    button {
+      width: 100%;
+      min-height: 44px; // Touch target size
+    }
+  }
+}
+
+// Size Variants
+// ==========================================================================
+
+.dialog--small {
+  @include dialog-size('small');
+}
+
+.dialog--medium {
+  @include dialog-size('medium');
+}
+
+.dialog--large {
+  @include dialog-size('large');
+}
+
+// Theme Support
+// ==========================================================================
+
+@media (prefers-color-scheme: dark) {
+  .dialog {
+    background-color: map-get(map-get($colors, surface), main);
+    
+    .dialog-header,
+    .dialog-footer {
+      border-color: rgba(map-get(map-get($colors, border), light), 0.1);
+    }
+    
+    .dialog-body {
+      color: map-get(map-get($colors, text), primary);
+    }
+  }
+  
+  .dialog-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+}

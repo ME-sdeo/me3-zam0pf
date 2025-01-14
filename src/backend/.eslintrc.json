@@ -1,0 +1,68 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "tsconfigRootDir": "."
+  },
+  "plugins": [
+    "@typescript-eslint",
+    "security",
+    "node"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:security/recommended",
+    "plugin:node/recommended",
+    "prettier"
+  ],
+  "env": {
+    "node": true,
+    "es2020": true,
+    "jest": true
+  },
+  "rules": {
+    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": ["error", {
+      "argsIgnorePattern": "^_"
+    }],
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/strict-boolean-expressions": "error",
+    "@typescript-eslint/no-unsafe-assignment": "error",
+    "@typescript-eslint/no-unsafe-member-access": "error",
+    "security/detect-possible-timing-attacks": "error",
+    "security/detect-non-literal-fs-filename": "error",
+    "security/detect-eval-with-expression": "error",
+    "security/detect-unsafe-regex": "error",
+    "security/detect-buffer-noassert": "error",
+    "node/no-deprecated-api": "error",
+    "node/no-missing-import": "error",
+    "no-console": "error",
+    "no-return-await": "error",
+    "require-await": "error",
+    "no-var": "error",
+    "prefer-const": "error"
+  },
+  "ignorePatterns": [
+    "dist",
+    "coverage",
+    "node_modules",
+    "*.js",
+    "*.d.ts"
+  ],
+  "settings": {
+    "node": {
+      "tryExtensions": [
+        ".ts",
+        ".d.ts",
+        ".js",
+        ".json"
+      ]
+    }
+  }
+}

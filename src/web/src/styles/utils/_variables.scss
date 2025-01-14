@@ -1,0 +1,223 @@
+// MyElixir Design System Variables
+// Version: 1.0.0
+// Description: Core design tokens and configuration settings for MyElixir platform
+
+// ==========================================================================
+// Colors
+// ==========================================================================
+
+$colors: (
+  primary: (
+    main: #2196F3,
+    light: #64B5F6,
+    dark: #1976D2,
+    contrast: #FFFFFF
+  ),
+  secondary: (
+    main: #FFC107,
+    light: #FFD54F,
+    dark: #FFA000,
+    contrast: #000000
+  ),
+  semantic: (
+    success: #4CAF50,
+    warning: #FF9800,
+    error: #F44336,
+    info: #2196F3
+  ),
+  text: (
+    primary: #212121,
+    secondary: #757575,
+    disabled: #9E9E9E,
+    hint: #616161
+  ),
+  background: (
+    default: #FFFFFF,
+    paper: #FAFAFA,
+    disabled: #F5F5F5
+  ),
+  surface: (
+    main: #FFFFFF,
+    hover: #F5F5F5,
+    selected: #E3F2FD
+  ),
+  border: (
+    light: #E0E0E0,
+    medium: #BDBDBD,
+    dark: #9E9E9E
+  )
+);
+
+// ==========================================================================
+// Typography
+// ==========================================================================
+
+$typography: (
+  font-family: (
+    primary: 'Roboto, sans-serif',
+    secondary: 'Open Sans, sans-serif',
+    monospace: 'Roboto Mono, monospace'
+  ),
+  font-sizes: (
+    h1: 24px,
+    h2: 20px,
+    h3: 18px,
+    body1: 16px,
+    body2: 14px,
+    caption: 12px,
+    overline: 10px
+  ),
+  font-weights: (
+    light: 300,
+    regular: 400,
+    medium: 500,
+    bold: 700
+  ),
+  line-heights: (
+    tight: 1.2,
+    normal: 1.5,
+    loose: 1.8
+  ),
+  letter-spacing: (
+    tight: -0.5px,
+    normal: 0,
+    wide: 0.5px
+  )
+);
+
+// ==========================================================================
+// Spacing
+// ==========================================================================
+
+$spacing: (
+  xxs: 2px,
+  xs: 4px,
+  sm: 8px,
+  md: 16px,
+  lg: 24px,
+  xl: 32px,
+  xxl: 48px,
+  xxxl: 64px
+);
+
+// ==========================================================================
+// Breakpoints
+// ==========================================================================
+
+$breakpoints: (
+  xs: 0px,
+  mobile: 768px,
+  tablet: 1024px,
+  desktop: 1280px,
+  wide: 1440px
+);
+
+// ==========================================================================
+// Grid
+// ==========================================================================
+
+$grid: (
+  columns: 12,
+  gutter: 24px,
+  container: (
+    mobile: 100%,
+    tablet: 720px,
+    desktop: 1170px,
+    wide: 1320px
+  )
+);
+
+// ==========================================================================
+// Border Radius
+// ==========================================================================
+
+$border-radius: (
+  none: 0,
+  small: 4px,
+  medium: 8px,
+  large: 16px,
+  pill: 999px,
+  circle: 50%
+);
+
+// ==========================================================================
+// Shadows
+// ==========================================================================
+
+$shadows: (
+  none: none,
+  low: 0 2px 4px rgba(0, 0, 0, 0.1),
+  medium: 0 4px 8px rgba(0, 0, 0, 0.1),
+  high: 0 8px 16px rgba(0, 0, 0, 0.1),
+  focus: 0 0 0 3px rgba(33, 150, 243, 0.4)
+);
+
+// ==========================================================================
+// Z-Index
+// ==========================================================================
+
+$z-index: (
+  below: -1,
+  default: 1,
+  sticky: 100,
+  header: 700,
+  dropdown: 800,
+  overlay: 900,
+  modal: 1000,
+  tooltip: 1100,
+  toast: 1200
+);
+
+// ==========================================================================
+// Transitions
+// ==========================================================================
+
+$transitions: (
+  duration: (
+    instant: 0ms,
+    fast: 150ms,
+    normal: 250ms,
+    slow: 350ms
+  ),
+  timing: (
+    ease-in-out: cubic-bezier(0.4, 0, 0.2, 1),
+    ease-out: cubic-bezier(0.0, 0, 0.2, 1),
+    ease-in: cubic-bezier(0.4, 0, 1, 1)
+  )
+);
+
+// ==========================================================================
+// Functions
+// ==========================================================================
+
+@function px-to-rem($px) {
+  @return ($px / 16px) * 1rem;
+}
+
+@function get-color($path, $opacity: 1) {
+  $color: map-get($colors, $path);
+  @if $opacity < 1 {
+    @return rgba($color, $opacity);
+  }
+  @return $color;
+}
+
+// ==========================================================================
+// Exports
+// ==========================================================================
+
+:export {
+  colors: $colors;
+  typography: $typography;
+  design-tokens: (
+    colors: $colors,
+    typography: $typography,
+    spacing: $spacing,
+    breakpoints: $breakpoints,
+    grid: $grid,
+    border-radius: $border-radius,
+    shadows: $shadows,
+    z-index: $z-index,
+    transitions: $transitions
+  );
+}

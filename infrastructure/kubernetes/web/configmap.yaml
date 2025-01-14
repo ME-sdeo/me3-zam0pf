@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-config
+  namespace: default
+  labels:
+    app: web-frontend
+    component: frontend
+    part-of: myelixir
+    managed-by: kubectl
+data:
+  # API Configuration
+  VITE_API_URL: "/api"
+  VITE_API_VERSION: "v1"
+  VITE_APP_NAME: "MyElixir"
+  VITE_APP_DESCRIPTION: "Healthcare Data Marketplace"
+  
+  # API Performance Settings
+  VITE_API_TIMEOUT: "30000"
+  VITE_API_RETRY_ATTEMPTS: "3"
+  VITE_API_RETRY_DELAY: "1000"
+  
+  # Feature Flags
+  VITE_ENABLE_ANALYTICS: "true"
+  VITE_ENABLE_ERROR_REPORTING: "true"
+  
+  # Upload Configuration
+  VITE_MAX_UPLOAD_SIZE: "50"
+  VITE_MAX_CONCURRENT_UPLOADS: "3"
+  
+  # Internationalization
+  VITE_SUPPORTED_LOCALES: "en,es"
+  VITE_DEFAULT_LOCALE: "en"
+  
+  # Health Monitoring
+  VITE_HEALTH_CHECK_PATH: "/health"
+  VITE_HEALTH_CHECK_INTERVAL: "30000"
+  
+  # Caching
+  VITE_CACHE_TTL: "3600"
+  
+  # WebSocket Configuration
+  VITE_WEBSOCKET_RECONNECT_ATTEMPTS: "5"
+  VITE_WEBSOCKET_RECONNECT_INTERVAL: "2000"

@@ -1,0 +1,137 @@
+name: Web CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/web/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 'Deployment environment'
+        options:
+          - staging
+          - production
+
+env:
+  DOCKER_BUILDKIT: 1
+  NODE_ENV: production
+  DEPLOYMENT_TIMEOUT: 300s
+  WORKING_DIRECTORY: ./src/web
+
+jobs:
+  deploy:
+    name: Deploy web frontend
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Scan container for vulnerabilities
+        uses: aquasecurity/trivy-action@v0.11.0
+        with:
+          image-ref: '${{ secrets.ACR_REGISTRY }}/myelixir/web:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.WORKING_DIRECTORY }}
+          file: ${{ env.WORKING_DIRECTORY }}/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.ACR_REGISTRY }}/myelixir/web:${{ github.sha }}
+            ${{ secrets.ACR_REGISTRY }}/myelixir/web:latest
+          cache-from: type=registry,ref=${{ secrets.ACR_REGISTRY }}/myelixir/web:buildcache
+          cache-to: type=registry,ref=${{ secrets.ACR_REGISTRY }}/myelixir/web:buildcache,mode=max
+
+      - name: Validate deployment manifest
+        run: |
+          kubectl apply --dry-run=client -f infrastructure/kubernetes/web/deployment.yaml
+
+      - name: Update deployment image
+        run: |
+          kubectl set image deployment/web-frontend \
+            web=${{ secrets.ACR_REGISTRY }}/myelixir/web:${{ github.sha }} \
+            -n ${{ secrets.DEPLOYMENT_NAMESPACE }}
+
+      - name: Wait for rollout completion
+        id: deploy
+        run: |
+          kubectl rollout status deployment/web-frontend \
+            -n ${{ secrets.DEPLOYMENT_NAMESPACE }} \
+            --timeout=${{ env.DEPLOYMENT_TIMEOUT }}
+          
+          DEPLOY_URL=$(kubectl get service web-frontend \
+            -n ${{ secrets.DEPLOYMENT_NAMESPACE }} \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "url=https://${DEPLOY_URL}" >> $GITHUB_OUTPUT
+
+      - name: Verify deployment health
+        run: |
+          for i in {1..6}; do
+            HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${DEPLOY_URL}/health)
+            if [ "$HEALTH_STATUS" -eq 200 ]; then
+              echo "Health check passed"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Health check failed"
+          exit 1
+
+      - name: Monitor initial performance metrics
+        run: |
+          kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/${{ secrets.DEPLOYMENT_NAMESPACE }}/pods | \
+          jq '.items[] | select(.metadata.name | startswith("web-frontend"))'
+
+      - name: Notify deployment status
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { status, conclusion } = context.job
+            const deployEnv = '${{ github.event.inputs.environment || 'staging' }}'
+            const message = `Deployment to ${deployEnv} ${conclusion}`
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment.id,
+              state: conclusion === 'success' ? 'success' : 'failure',
+              description: message,
+              environment_url: '${{ steps.deploy.outputs.url }}'
+            })

@@ -1,0 +1,156 @@
+// ==========================================================================
+// Card Component
+// Version: 1.0.0
+// Description: Material Design 3.0 card component with enhanced accessibility
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// Base Card Component
+.card {
+  position: relative;
+  min-height: 44px; // Minimum touch target size
+  min-width: 44px; // Minimum touch target size
+  border-radius: map-get($border-radius, "medium");
+  overflow: hidden; // Contain child elements
+  
+  @include theme-aware("background-color", 
+    map-get($colors, "surface", "main"),
+    map-get($colors, "background", "paper")
+  );
+  
+  @include elevation(1);
+  
+  // Responsive padding and layout
+  padding: map-get($spacing, "sm");
+  margin-bottom: map-get($spacing, "sm");
+  width: 100%;
+  
+  @include respond-to("tablet") {
+    padding: map-get($spacing, "md");
+    margin-bottom: map-get($spacing, "md");
+    width: calc(50% - #{map-get($spacing, "md")});
+  }
+  
+  @include respond-to("desktop") {
+    padding: map-get($spacing, "lg");
+    margin-bottom: map-get($spacing, "lg");
+    width: calc(33.333% - #{map-get($spacing, "lg")});
+  }
+
+  // Smooth transitions for all interactive states
+  transition: 
+    transform map-get($transitions, "duration", "normal") map-get($transitions, "timing", "ease-out"),
+    box-shadow map-get($transitions, "duration", "normal") map-get($transitions, "timing", "ease-out"),
+    background-color map-get($transitions, "duration", "normal") map-get($transitions, "timing", "ease-out");
+}
+
+// Interactive Card Variant
+.card--interactive {
+  cursor: pointer;
+  transform-origin: center;
+
+  &:hover {
+    @include elevation(2);
+    transform: scale(1.02);
+    
+    @include theme-aware("background-color",
+      map-get($colors, "surface", "hover"),
+      darken(map-get($colors, "background", "paper"), 5%)
+    );
+  }
+
+  &:active {
+    @include elevation(3);
+    transform: scale(0.98);
+  }
+
+  // Enhanced focus state for keyboard navigation
+  &:focus-visible {
+    @include focus-ring(map-get($colors, "primary", "main"));
+    outline-offset: 2px;
+  }
+
+  // High contrast mode support
+  @media (prefers-contrast: high) {
+    &:hover, &:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Content Areas
+.card__header {
+  margin-bottom: map-get($spacing, "md");
+  
+  @include typography("h3");
+}
+
+.card__content {
+  @include typography("body1");
+  color: map-get($colors, "text", "primary");
+}
+
+.card__footer {
+  margin-top: map-get($spacing, "md");
+  padding-top: map-get($spacing, "sm");
+  border-top: 1px solid map-get($colors, "border", "light");
+  
+  @include typography("body2");
+  color: map-get($colors, "text", "secondary");
+}
+
+// Loading State
+.card--loading {
+  pointer-events: none;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    animation: card-loading 1.5s infinite;
+  }
+}
+
+@keyframes card-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+// Accessibility Enhancements
+.card[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+// Print styles
+@media print {
+  .card {
+    box-shadow: none !important;
+    border: 1px solid map-get($colors, "border", "medium");
+    break-inside: avoid;
+  }
+  
+  .card--interactive {
+    &:hover, &:focus {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}

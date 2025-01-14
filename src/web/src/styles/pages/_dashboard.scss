@@ -1,0 +1,180 @@
+// ==========================================================================
+// Dashboard Styles
+// Version: 1.0.0
+// Description: Material Design 3.0 compliant styles for MyElixir dashboard
+// ==========================================================================
+
+@import '../utils/variables';
+@import '../utils/mixins';
+
+// Main dashboard container
+.dashboard {
+  padding: map.get($spacing, "md");
+  margin-bottom: map.get($spacing, "xl");
+  contain: layout;
+  min-height: 100vh;
+  
+  @include theme-aware('background-color', 
+    map.get($colors, "background", "default"), 
+    map.get($colors, "background", "dark")
+  );
+  
+  @include theme-aware('color',
+    map.get($colors, "text", "primary"),
+    map.get($colors, "text", "primary-dark")
+  );
+}
+
+// Responsive grid layout for dashboard widgets
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: map.get($spacing, "md");
+  width: 100%;
+  max-width: map.get($grid, "container", "desktop");
+  margin: 0 auto;
+  
+  @include respond-to("tablet") {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @include respond-to("desktop") {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @include respond-to("wide") {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: map.get($grid, "container", "wide");
+  }
+}
+
+// Material Design card component
+.dashboard-card {
+  border-radius: map.get($border-radius, "medium");
+  padding: map.get($spacing, "md");
+  transition: box-shadow map.get($transitions, "duration", "normal") 
+              map.get($transitions, "timing", "ease-out");
+  will-change: transform;
+  position: relative;
+  
+  @include theme-aware('background-color',
+    map.get($colors, "surface", "main"),
+    map.get($colors, "surface", "dark")
+  );
+  
+  @include theme-aware('border-color',
+    map.get($colors, "border", "light"),
+    map.get($colors, "border", "dark")
+  );
+  
+  @include elevation(2);
+  
+  &:hover {
+    @include elevation(4);
+  }
+  
+  &:focus-within {
+    @include elevation(4);
+    outline: 2px solid var(--color-primary);
+  }
+}
+
+// Metrics grid layout
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: map.get($spacing, "sm");
+  margin-bottom: map.get($spacing, "md");
+  
+  @include respond-to("tablet") {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @include respond-to("desktop") {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// Activity list with custom scrollbar
+.activity-list {
+  margin-top: map.get($spacing, "lg");
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: map.get($spacing, "sm");
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    @include theme-aware('background-color',
+      rgba(0, 0, 0, 0.2),
+      rgba(255, 255, 255, 0.2)
+    );
+    border-radius: map.get($border-radius, "pill");
+  }
+  
+  &::-webkit-scrollbar-track {
+    @include theme-aware('background-color',
+      rgba(0, 0, 0, 0.05),
+      rgba(255, 255, 255, 0.05)
+    );
+  }
+}
+
+// Chart container with responsive height
+.chart-container {
+  height: 300px;
+  margin: map.get($spacing, "md") 0;
+  position: relative;
+  
+  @include respond-to("tablet") {
+    height: 350px;
+  }
+  
+  @include respond-to("desktop") {
+    height: 400px;
+  }
+}
+
+// High contrast mode overrides
+@media (prefers-contrast: high) {
+  .dashboard-card {
+    border: 2px solid currentColor;
+    box-shadow: none;
+  }
+  
+  .activity-list {
+    &::-webkit-scrollbar-thumb {
+      background-color: currentColor;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+  }
+}
+
+// Print styles
+@media print {
+  .dashboard {
+    background: white;
+    color: black;
+    min-height: auto;
+  }
+  
+  .dashboard-grid {
+    display: block;
+  }
+  
+  .dashboard-card {
+    page-break-inside: avoid;
+    border: 1px solid black;
+    box-shadow: none;
+  }
+  
+  .chart-container {
+    height: 200px;
+  }
+}

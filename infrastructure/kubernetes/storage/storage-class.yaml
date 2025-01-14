@@ -1,0 +1,43 @@
+# StorageClass configuration for HIPAA-compliant encrypted Azure managed disks
+# Version: v1.25+
+# Purpose: Defines storage provisioner and parameters for secure healthcare data storage
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: managed-premium-encrypted
+  labels:
+    app: myelixir
+    environment: production
+    type: managed-disk
+    compliance: hipaa-compliant
+    encryption: aes256
+
+# Azure disk provisioner for managed Premium SSD
+provisioner: kubernetes.io/azure-disk
+
+# Retain volumes even after PVC deletion for data protection
+reclaimPolicy: Retain
+
+# Wait for pod scheduling before provisioning for optimal placement
+volumeBindingMode: WaitForFirstConsumer
+
+# Enable volume expansion for future storage needs
+allowVolumeExpansion: true
+
+# Storage configuration parameters
+parameters:
+  # Premium SSD for high performance
+  storageaccounttype: Premium_LRS
+  # Use Azure managed disks
+  kind: Managed
+  # ReadOnly caching for data consistency
+  cachingmode: ReadOnly
+  # Enable Azure Storage Service Encryption (AES-256)
+  encryption: "true"
+  # Premium tier SKU
+  skuName: Premium_LRS
+  # Primary deployment region
+  location: eastus
+  # Zone redundancy for high availability
+  zones: "1,2,3"

@@ -1,0 +1,241 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml:
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      scrape_timeout: 10s
+    
+    rule_files:
+      - /etc/prometheus/rules/*.yaml
+    
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager:9093']
+    
+    scrape_configs:
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+data:
+  alerts.yaml: |
+    groups:
+      - name: myelixir.performance.rules
+        rules:
+          - alert: HighAPILatency
+            expr: http_request_duration_seconds{service=~"api-.*"} > 2
+            for: 5m
+            labels:
+              severity: warning
+              category: performance
+            annotations:
+              description: "High API latency detected in {{ $labels.service }}"
+              summary: "API latency exceeds 2 seconds"
+
+          - alert: DatabaseQueryLatency
+            expr: database_query_duration_seconds > 1
+            for: 5m
+            labels:
+              severity: warning
+              category: performance
+            annotations:
+              description: "Slow database queries detected"
+              summary: "Database query latency exceeds 1 second"
+
+          - alert: BlockchainTransactionDelay
+            expr: blockchain_transaction_duration_seconds > 5
+            for: 5m
+            labels:
+              severity: warning
+              category: performance
+            annotations:
+              description: "Slow blockchain transactions detected"
+              summary: "Blockchain transaction time exceeds 5 seconds"
+
+      - name: myelixir.security.rules
+        rules:
+          - alert: HighAuthFailures
+            expr: rate(authentication_failures_total[5m]) > 10
+            for: 5m
+            labels:
+              severity: critical
+              category: security
+            annotations:
+              description: "High rate of authentication failures detected"
+              summary: "Authentication failures exceed threshold"
+
+          - alert: RateLimitExceeded
+            expr: rate(rate_limit_exceeded_total[5m]) > 100
+            for: 5m
+            labels:
+              severity: critical
+              category: security
+            annotations:
+              description: "Rate limiting thresholds exceeded"
+              summary: "API rate limits exceeded"
+
+          - alert: SuspiciousAccessPattern
+            expr: rate(suspicious_access_patterns_total[5m]) > 50
+            for: 5m
+            labels:
+              severity: critical
+              category: security
+            annotations:
+              description: "Suspicious access patterns detected"
+              summary: "Potential security threat detected"
+
+      - name: myelixir.health.rules
+        rules:
+          - alert: PodRestartingFrequently
+            expr: rate(kube_pod_container_status_restarts_total[1h]) > 5
+            for: 10m
+            labels:
+              severity: warning
+              category: health
+            annotations:
+              description: "Pod {{ $labels.pod }} is restarting frequently"
+              summary: "Pod restart rate is high"
+
+          - alert: HighMemoryUsage
+            expr: container_memory_usage_bytes / container_memory_limit_bytes > 0.9
+            for: 5m
+            labels:
+              severity: warning
+              category: health
+            annotations:
+              description: "Container {{ $labels.container }} memory usage > 90%"
+              summary: "High memory usage detected"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.45.0
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=30d
+            - --web.enable-lifecycle
+            - --web.enable-admin-api
+          ports:
+            - containerPort: 9090
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              cpu: 1000m
+              memory: 4Gi
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+            - name: prometheus-rules
+              mountPath: /etc/prometheus/rules
+            - name: prometheus-storage
+              mountPath: /prometheus
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+        - name: prometheus-rules
+          configMap:
+            name: prometheus-rules
+        - name: prometheus-storage
+          persistentVolumeClaim:
+            claimName: prometheus-storage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      name: http
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-storage
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: managed-premium

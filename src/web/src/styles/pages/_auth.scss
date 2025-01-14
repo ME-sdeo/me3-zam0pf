@@ -1,0 +1,198 @@
+// ==========================================================================
+// Authentication Pages Styles
+// Version: 1.0.0
+// Description: Implements Material Design principles for auth pages with 
+// responsive layouts, accessibility standards, and theme support
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// Main authentication page container
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: map-get($spacing, 'lg');
+  transition: background-color map-get($transitions, 'duration', 'normal') 
+              map-get($transitions, 'timing', 'ease-in-out');
+
+  @include theme-aware(
+    'background-color',
+    map-get($colors, 'background', 'default'),
+    map-get($colors, 'background', 'paper')
+  );
+
+  @include respond-to('mobile') {
+    padding: map-get($spacing, 'md');
+  }
+}
+
+// Material Design card container
+.auth-card {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: map-get($spacing, 'xl');
+  border-radius: map-get($border-radius, 'medium');
+  
+  @include elevation(2);
+  @include theme-aware(
+    'background-color',
+    map-get($colors, 'surface', 'main'),
+    map-get($colors, 'surface', 'hover')
+  );
+
+  transition: 
+    box-shadow map-get($transitions, 'duration', 'normal') map-get($transitions, 'timing', 'ease-out'),
+    background-color map-get($transitions, 'duration', 'normal') map-get($transitions, 'timing', 'ease-in-out');
+
+  @include respond-to('mobile') {
+    padding: map-get($spacing, 'lg');
+  }
+}
+
+// Typography-driven header
+.auth-header {
+  margin-bottom: map-get($spacing, 'xl');
+  text-align: center;
+
+  h1 {
+    @include typography('h1');
+    @include theme-aware(
+      'color',
+      map-get($colors, 'text', 'primary'),
+      map-get($colors, 'text', 'primary')
+    );
+    margin-bottom: map-get($spacing, 'sm');
+  }
+
+  p {
+    @include typography('body1');
+    @include theme-aware(
+      'color',
+      map-get($colors, 'text', 'secondary'),
+      map-get($colors, 'text', 'secondary')
+    );
+  }
+}
+
+// Accessible form layout
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: map-get($spacing, 'md');
+
+  // Enhanced focus states for form elements
+  input, button, a {
+    @include focus-ring(map-get($colors, 'primary', 'main'));
+  }
+
+  // Form field layout
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: map-get($spacing, 'xs');
+
+    label {
+      @include typography('body2');
+      @include theme-aware(
+        'color',
+        map-get($colors, 'text', 'secondary'),
+        map-get($colors, 'text', 'secondary')
+      );
+    }
+
+    input {
+      padding: map-get($spacing, 'sm') map-get($spacing, 'md');
+      border-radius: map-get($border-radius, 'small');
+      border: 1px solid map-get($colors, 'border', 'light');
+      
+      @include theme-aware(
+        'background-color',
+        map-get($colors, 'surface', 'main'),
+        map-get($colors, 'surface', 'hover')
+      );
+
+      &:hover {
+        border-color: map-get($colors, 'border', 'medium');
+      }
+
+      &:focus {
+        border-color: map-get($colors, 'primary', 'main');
+      }
+    }
+  }
+
+  // Primary action button
+  .auth-submit {
+    margin-top: map-get($spacing, 'md');
+    padding: map-get($spacing, 'sm') map-get($spacing, 'lg');
+    border-radius: map-get($border-radius, 'small');
+    border: none;
+    cursor: pointer;
+    
+    @include typography('body1');
+    @include theme-aware(
+      'background-color',
+      map-get($colors, 'primary', 'main'),
+      map-get($colors, 'primary', 'dark')
+    );
+    @include theme-aware(
+      'color',
+      map-get($colors, 'primary', 'contrast'),
+      map-get($colors, 'primary', 'contrast')
+    );
+
+    &:hover {
+      @include theme-aware(
+        'background-color',
+        map-get($colors, 'primary', 'light'),
+        map-get($colors, 'primary', 'main')
+      );
+    }
+
+    &:disabled {
+      @include theme-aware(
+        'background-color',
+        map-get($colors, 'background', 'disabled'),
+        map-get($colors, 'background', 'disabled')
+      );
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Footer with links and additional info
+.auth-footer {
+  margin-top: map-get($spacing, 'xl');
+  text-align: center;
+
+  p {
+    @include typography('body2');
+    @include theme-aware(
+      'color',
+      map-get($colors, 'text', 'secondary'),
+      map-get($colors, 'text', 'secondary')
+    );
+  }
+
+  a {
+    @include typography('body2');
+    text-decoration: none;
+    @include theme-aware(
+      'color',
+      map-get($colors, 'primary', 'main'),
+      map-get($colors, 'primary', 'light')
+    );
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  @include respond-to('mobile') {
+    margin-top: map-get($spacing, 'lg');
+  }
+}

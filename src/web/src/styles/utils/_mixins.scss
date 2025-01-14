@@ -1,0 +1,168 @@
+// ==========================================================================
+// MyElixir Design System Mixins
+// Version: 1.0.0
+// Description: Core SCSS mixins for consistent, accessible UI components
+// ==========================================================================
+
+@use 'sass:map';
+@use 'sass:math';
+@use 'sass:color';
+@import './variables';
+
+// ==========================================================================
+// Responsive Design
+// ==========================================================================
+
+@mixin respond-to($breakpoint, $custom-value: null) {
+  @if not map.has-key($breakpoints, $breakpoint) and not $custom-value {
+    @error 'Invalid breakpoint: #{$breakpoint}. Available breakpoints: #{map.keys($breakpoints)}';
+  }
+
+  $min-width: if($custom-value, $custom-value, map.get($breakpoints, $breakpoint));
+  
+  @media screen and (min-width: #{$min-width}) {
+    @content;
+  }
+
+  @supports not (min-width: #{$min-width}) {
+    @content;
+  }
+}
+
+// ==========================================================================
+// Material Design Elevation
+// ==========================================================================
+
+@mixin elevation($level: 1, $z-index: null) {
+  @if not type-of($level) == 'number' or $level < 1 or $level > 5 {
+    @error 'Elevation level must be a number between 1 and 5';
+  }
+
+  $ambient-y: $level * 1px;
+  $ambient-blur: $level * 4px;
+  $direct-y: $level * 2px;
+  $direct-blur: $level * 2px;
+  
+  --elevation-ambient: #{rgba(0, 0, 0, 0.12)};
+  --elevation-direct: #{rgba(0, 0, 0, 0.14)};
+
+  box-shadow: 
+    0 #{$ambient-y} #{$ambient-blur} var(--elevation-ambient),
+    0 #{$direct-y} #{$direct-blur} var(--elevation-direct);
+
+  @if $z-index {
+    z-index: $z-index;
+  }
+
+  @media (prefers-contrast: high) {
+    box-shadow: 0 0 0 2px currentColor;
+  }
+}
+
+// ==========================================================================
+// Accessibility - Focus Ring
+// ==========================================================================
+
+@mixin focus-ring($ring-color: map.get($colors, "primary", "main"), $style: "solid") {
+  $contrast-ratio: color.contrast($ring-color, #FFFFFF);
+  
+  @if $contrast-ratio < 3 {
+    @warn 'Focus ring color may not meet WCAG 2.1 contrast requirements';
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px $ring-color;
+    position: relative;
+    z-index: map.get($z-index, "focus");
+    transition: box-shadow map.get($transitions, "duration", "fast") 
+                map.get($transitions, "timing", "ease-out");
+  }
+
+  @media (prefers-contrast: high) {
+    &:focus {
+      outline: 4px solid currentColor;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// ==========================================================================
+// Theme Support
+// ==========================================================================
+
+@mixin theme-aware($property, $light-value, $dark-value) {
+  @if not type-of($property) == "string" {
+    @error 'Property must be a string';
+  }
+
+  #{$property}: $light-value;
+  transition: #{$property} map.get($transitions, "duration", "normal") 
+              map.get($transitions, "timing", "ease-in-out");
+
+  @media (prefers-color-scheme: dark) {
+    #{$property}: $dark-value;
+  }
+
+  @media (prefers-contrast: high) {
+    $high-contrast-value: if(
+      type-of($light-value) == "color",
+      if(color.lightness($light-value) > 50%, #000000, #FFFFFF),
+      $light-value
+    );
+    #{$property}: $high-contrast-value;
+  }
+}
+
+// ==========================================================================
+// Typography Utilities
+// ==========================================================================
+
+@mixin typography($variant) {
+  $font-sizes: map.get($typography, "font-sizes");
+  $font-weights: map.get($typography, "font-weights");
+  $line-heights: map.get($typography, "line-heights");
+  
+  @if map.has-key($font-sizes, $variant) {
+    font-size: map.get($font-sizes, $variant);
+    line-height: map.get($line-heights, "normal");
+    font-family: map.get($typography, "font-family", "primary");
+    
+    @if $variant == "h1" or $variant == "h2" or $variant == "h3" {
+      font-weight: map.get($font-weights, "medium");
+      letter-spacing: map.get($typography, "letter-spacing", "tight");
+    } @else {
+      font-weight: map.get($font-weights, "regular");
+      letter-spacing: map.get($typography, "letter-spacing", "normal");
+    }
+  } @else {
+    @error 'Invalid typography variant: #{$variant}';
+  }
+}
+
+// ==========================================================================
+// Interactive States
+// ==========================================================================
+
+@mixin interactive-state($base-color, $type: "hover") {
+  $hover-opacity: 0.08;
+  $active-opacity: 0.12;
+  $selected-opacity: 0.16;
+  
+  @if $type == "hover" {
+    &:hover {
+      background-color: rgba($base-color, $hover-opacity);
+    }
+  } @else if $type == "active" {
+    &:active {
+      background-color: rgba($base-color, $active-opacity);
+    }
+  } @else if $type == "selected" {
+    &[aria-selected="true"] {
+      background-color: rgba($base-color, $selected-opacity);
+    }
+  }
+  
+  transition: background-color map.get($transitions, "duration", "fast")
+              map.get($transitions, "timing", "ease-out");
+}

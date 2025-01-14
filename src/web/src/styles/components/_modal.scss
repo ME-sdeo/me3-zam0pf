@@ -1,0 +1,199 @@
+// ==========================================================================
+// Modal Component Styles
+// Version: 1.0.0
+// Description: Material Design 3.0 modal implementation with accessibility
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// Modal Animation Keyframes
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modal-exit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+}
+
+// Base Modal Class
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: map-get($z-index, modal);
+  isolation: isolate;
+
+  &[aria-hidden="false"] {
+    display: block;
+  }
+
+  // Accessibility - Hide modal from screen readers when closed
+  &[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+// Modal Overlay
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: map-get($z-index, overlay);
+  @include flex-center;
+  opacity: 0;
+  transition: opacity map-get($transitions, duration, normal) map-get($transitions, timing, ease-out);
+  will-change: opacity;
+  contain: strict;
+
+  .modal[aria-hidden="false"] & {
+    opacity: 1;
+  }
+}
+
+// Modal Container
+.modal-container {
+  position: relative;
+  @include theme-aware('background-color', map-get($colors, surface, main), #1E1E1E);
+  border-radius: map-get($border-radius, large);
+  padding: map-get($spacing, lg);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  @include elevation(3);
+  @include scrollbar;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: 
+    transform map-get($transitions, duration, normal) map-get($transitions, timing, ease-out),
+    opacity map-get($transitions, duration, normal) map-get($transitions, timing, ease-out);
+  will-change: transform, opacity;
+  contain: content;
+
+  .modal[aria-hidden="false"] & {
+    transform: translateY(0);
+    opacity: 1;
+    animation: modal-enter 0.3s map-get($transitions, timing, ease-out);
+  }
+
+  @include respond-to(mobile) {
+    padding: map-get($spacing, md);
+  }
+}
+
+// Modal Header
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: map-get($spacing, md);
+  @include theme-aware('border-bottom', map-get($colors, border, light), #2E2E2E);
+  padding-bottom: map-get($spacing, sm);
+}
+
+// Modal Title
+.modal-title {
+  @include typography(h2);
+  @include theme-aware('color', map-get($colors, text, primary), #FFFFFF);
+  margin: 0;
+  line-height: 1.2;
+}
+
+// Modal Close Button
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: map-get($spacing, xs);
+  @include theme-aware('color', map-get($colors, text, secondary), #A0A0A0);
+  transition: 
+    color map-get($transitions, duration, fast) map-get($transitions, timing, ease-out),
+    background-color map-get($transitions, duration, fast) map-get($transitions, timing, ease-out);
+  border-radius: map-get($border-radius, circle);
+  @include focus-ring;
+
+  &:hover {
+    @include theme-aware('background-color', map-get($colors, surface, hover), #2E2E2E);
+  }
+
+  // Enhanced touch target for mobile
+  @include respond-to(mobile) {
+    padding: map-get($spacing, sm);
+  }
+}
+
+// Modal Content
+.modal-content {
+  margin-bottom: map-get($spacing, lg);
+  @include theme-aware('color', map-get($colors, text, primary), #FFFFFF);
+  line-height: 1.5;
+  
+  // Ensure proper spacing for nested content
+  > * + * {
+    margin-top: map-get($spacing, md);
+  }
+}
+
+// Modal Footer
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: map-get($spacing, md);
+  @include theme-aware('border-top', map-get($colors, border, light), #2E2E2E);
+  padding-top: map-get($spacing, md);
+  margin-top: auto;
+
+  // Stack buttons on mobile
+  @include respond-to(mobile) {
+    flex-direction: column-reverse;
+    gap: map-get($spacing, sm);
+  }
+}
+
+// Accessibility Enhancements
+.modal:focus {
+  outline: none;
+}
+
+// High Contrast Mode Support
+@media (prefers-contrast: high) {
+  .modal-container {
+    border: 2px solid currentColor;
+    box-shadow: none;
+  }
+
+  .modal-close {
+    border: 1px solid currentColor;
+  }
+}
+
+// Reduced Motion Support
+@media (prefers-reduced-motion: reduce) {
+  .modal-container,
+  .modal-overlay {
+    transition: none;
+    animation: none;
+  }
+}

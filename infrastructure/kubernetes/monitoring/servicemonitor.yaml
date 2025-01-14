@@ -1,0 +1,89 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: backend-monitor
+  namespace: monitoring
+  labels:
+    app: myelixir
+    component: backend
+    hipaa-compliant: "true"
+spec:
+  selector:
+    matchLabels:
+      app: myelixir
+      component: backend
+  namespaceSelector:
+    matchNames:
+      - default
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: false
+        serverName: "*.myelixir.local"
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: "http_request_duration_seconds.*|api_request_total|database_query_duration_seconds|auth_failures_total"
+          action: keep
+        - sourceLabels: ["__name__"]
+          regex: ".*password.*|.*secret.*|.*token.*"
+          action: drop
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: infrastructure-monitor
+  namespace: monitoring
+  labels:
+    app: myelixir
+    component: infrastructure
+    hipaa-compliant: "true"
+spec:
+  selector:
+    matchLabels:
+      app: myelixir
+      component: infrastructure
+  namespaceSelector:
+    matchNames:
+      - monitoring
+      - kube-system
+  endpoints:
+    - port: http
+      interval: 30s
+      path: /metrics
+      honorLabels: true
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: "container_memory_usage_bytes|container_cpu_usage_seconds_total|node_.*|kube_pod_status.*|kube_node_status.*"
+          action: keep
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blockchain-monitor
+  namespace: monitoring
+  labels:
+    app: myelixir
+    component: blockchain
+    hipaa-compliant: "true"
+spec:
+  selector:
+    matchLabels:
+      app: myelixir
+      component: blockchain
+  namespaceSelector:
+    matchNames:
+      - default
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+      scheme: https
+      metricRelabelings:
+        - sourceLabels: ["__name__"]
+          regex: "hyperledger_transaction_.*|consent_record_.*|blockchain_operation_duration_seconds"
+          action: keep

@@ -1,0 +1,219 @@
+import React, { useEffect, useCallback, useRef } from 'react';
+import classNames from 'classnames'; // ^2.3.2
+import { Portal } from '@mui/base'; // ^5.0.0
+import { AuditLogger } from '@myelixir/audit-logger'; // ^1.0.0
+
+import Button from './Button';
+import {
+  'dialog-overlay': dialogOverlay,
+  dialog,
+  'dialog-content': dialogContent,
+  'dialog-phi': dialogPhi,
+} from '../../styles/components/_dialog.scss';
+
+// Type definitions
+interface DialogAction {
+  label: string;
+  onClick: () => void;
+  variant: 'primary' | 'secondary' | 'outline' | 'emergency';
+  disabled?: boolean;
+}
+
+interface DialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  size?: 'sm' | 'md' | 'lg';
+  children: React.ReactNode;
+  actions?: DialogAction[];
+  closeOnOverlayClick?: boolean;
+  className?: string;
+  ariaLabel?: string;
+  securityLevel?: 'standard' | 'phi' | 'critical';
+  dataConsent?: boolean;
+  autoTimeout?: number;
+  highContrast?: boolean;
+}
+
+const auditLogger = new AuditLogger();
+
+export const Dialog: React.FC<DialogProps> = ({
+  isOpen,
+  onClose,
+  title,
+  size = 'md',
+  children,
+  actions = [],
+  closeOnOverlayClick = true,
+  className,
+  ariaLabel,
+  securityLevel = 'standard',
+  dataConsent = false,
+  autoTimeout,
+  highContrast = false,
+}) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  // Handle dialog timeout for sensitive data
+  useEffect(() => {
+    if (isOpen && autoTimeout && (securityLevel === 'phi' || securityLevel === 'critical')) {
+      timeoutRef.current = setTimeout(() => {
+        auditLogger.log({
+          action: 'DIALOG_AUTO_TIMEOUT',
+          securityLevel,
+          timestamp: new Date().toISOString(),
+        });
+        onClose();
+      }, autoTimeout);
+
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    }
+  }, [isOpen, autoTimeout, securityLevel, onClose]);
+
+  // Handle escape key press
+  const handleEscapeKey = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Escape' && isOpen) {
+      if (securityLevel === 'critical' && !dataConsent) {
+        auditLogger.log({
+          action: 'DIALOG_ESCAPE_BLOCKED',
+          securityLevel,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+      
+      auditLogger.log({
+        action: 'DIALOG_ESCAPE_CLOSE',
+        securityLevel,
+        timestamp: new Date().toISOString(),
+      });
+      onClose();
+    }
+  }, [isOpen, onClose, securityLevel, dataConsent]);
+
+  // Handle overlay click
+  const handleOverlayClick = (event: React.MouseEvent) => {
+    if (event.target === event.currentTarget && closeOnOverlayClick) {
+      if (securityLevel === 'critical' && !dataConsent) {
+        auditLogger.log({
+          action: 'DIALOG_OVERLAY_CLICK_BLOCKED',
+          securityLevel,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      auditLogger.log({
+        action: 'DIALOG_OVERLAY_CLOSE',
+        securityLevel,
+        timestamp: new Date().toISOString(),
+      });
+      onClose();
+    }
+  };
+
+  // Add event listeners
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [handleEscapeKey]);
+
+  // Focus trap implementation
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      const focusableElements = dialogRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      
+      if (focusableElements.length) {
+        (focusableElements[0] as HTMLElement).focus();
+      }
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const dialogClasses = classNames(
+    dialog,
+    {
+      [`dialog--${size}`]: size,
+      'dialog--phi': securityLevel === 'phi',
+      'dialog--critical': securityLevel === 'critical',
+      'dialog--high-contrast': highContrast,
+    },
+    className
+  );
+
+  return (
+    <Portal>
+      <div
+        className={dialogOverlay}
+        onClick={handleOverlayClick}
+        data-testid="dialog-overlay"
+      >
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dialog-title"
+          aria-describedby="dialog-content"
+          className={dialogClasses}
+          data-security-level={securityLevel}
+          data-consent-status={dataConsent}
+        >
+          <header className="dialog-header">
+            <h2 id="dialog-title">
+              {securityLevel !== 'standard' && (
+                <span className="dialog-security-indicator" aria-label={`Security Level: ${securityLevel}`}>
+                  {securityLevel === 'phi' ? '🔒' : '⚠️'}
+                </span>
+              )}
+              {title}
+            </h2>
+            {securityLevel !== 'critical' && (
+              <Button
+                variant="outline"
+                onClick={onClose}
+                ariaLabel="Close dialog"
+                className="dialog-close"
+                requiresConsent={securityLevel === 'phi' && !dataConsent}
+              >
+                ✕
+              </Button>
+            )}
+          </header>
+
+          <div id="dialog-content" className={dialogContent}>
+            {children}
+          </div>
+
+          {actions.length > 0 && (
+            <footer className="dialog-footer">
+              {actions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant={action.variant}
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                  requiresConsent={securityLevel !== 'standard' && !dataConsent}
+                  medicalEnvironment={true}
+                >
+                  {action.label}
+                </Button>
+              ))}
+            </footer>
+          )}
+        </div>
+      </div>
+    </Portal>
+  );
+};
+
+export default Dialog;

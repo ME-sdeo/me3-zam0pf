@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: myelixir-data-pv
+  labels:
+    app: myelixir
+    type: managed-premium-disk
+    environment: production
+    compliance: hipaa-gdpr
+    encryption: aes256-hsm
+    backup-policy: enabled
+    data-classification: phi-pii
+  annotations:
+    encryption.azure.com/algorithm: "AES256"
+    backup.azure.com/retention-period: "7-years"
+    compliance.myelixir.com/audit-date: "auto-updated"
+    zones.kubernetes.io/zone-redundancy: "enabled"
+    volume.beta.kubernetes.io/storage-class: "managed-premium-encrypted"
+    volume.kubernetes.io/provisioned-by: "kubernetes.io/azure-disk"
+
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: managed-premium-encrypted
+  azureDisk:
+    kind: Managed
+    diskName: myelixir-data-disk
+    diskURI: /subscriptions/${SUBSCRIPTION_ID}/resourceGroups/MC_myelixir_aks_eastus/providers/Microsoft.Compute/disks/myelixir-data-disk
+    cachingMode: None
+    fsType: ext4
+    readOnly: false
+  mountOptions:
+    - noatime
+    - nodiratime
+    - discard
+    - errors=remount-ro
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values:
+          - eastus-1
+          - eastus-2
+          - eastus-3
+  volumeMode: Filesystem

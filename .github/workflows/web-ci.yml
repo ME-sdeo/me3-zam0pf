@@ -1,0 +1,145 @@
+name: Web CI
+
+on:
+  push:
+    paths:
+      - 'src/web/**'
+      - '.github/workflows/web-ci.yml'
+  pull_request:
+    paths:
+      - 'src/web/**'
+      - '.github/workflows/web-ci.yml'
+
+env:
+  NODE_VERSION: '18.x'
+  WORKING_DIRECTORY: './src/web'
+  COVERAGE_THRESHOLD: 80
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules/.cache
+            ${{ env.WORKING_DIRECTORY }}/node_modules
+            ~/.cache/Cypress
+            build
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+            ${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: |
+          npm ci --audit
+          npm audit fix
+
+      - name: Type Check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+        
+      - name: Run Unit Tests
+        run: npm run test:coverage
+        env:
+          CI: true
+          NODE_ENV: test
+          
+      - name: Upload Test Coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: ${{ env.WORKING_DIRECTORY }}/coverage
+          retention-days: 14
+
+      - name: Run Security Scan
+        uses: github/codeql-action/analyze@v2
+        with:
+          languages: javascript, typescript
+          queries: security-extended, security-and-quality
+
+      - name: Dependency Vulnerability Check
+        uses: snyk/actions/node@v1
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: HIPAA Compliance Check
+        run: |
+          npx @hipaa-compliance/cli check \
+            --config .hipaa-compliance.json \
+            --fail-on-violation true
+
+      - name: Build Production
+        run: npm run build
+        env:
+          CI: true
+          NODE_ENV: production
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: ${{ env.WORKING_DIRECTORY }}/dist
+          retention-days: 14
+
+      - name: Check Bundle Size
+        run: |
+          npx bundlesize
+        env:
+          BUNDLESIZE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Accessibility Tests
+        run: |
+          npx @axe-core/cli src/dist/index.html --exit
+        continue-on-error: true
+
+  notify:
+    needs: build
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Build Failure
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Web CI Build Failure',
+              body: `Build failed in workflow run: ${context.workflow_run.html_url}`,
+              labels: ['ci-failure', 'priority-high']
+            })
+
+permissions:
+  contents: read
+  security-events: write
+  actions: write
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true

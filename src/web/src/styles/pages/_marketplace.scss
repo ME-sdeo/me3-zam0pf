@@ -1,0 +1,247 @@
+// ==========================================================================
+// Marketplace Styles
+// Version: 1.0.0
+// Description: SCSS styles for marketplace components implementing Material Design 3.0
+// ==========================================================================
+
+@use '../utils/variables' as *;
+@use '../utils/mixins' as *;
+
+// ==========================================================================
+// Marketplace Container
+// ==========================================================================
+
+.marketplace {
+  padding: map.get($spacing, "md");
+  margin-bottom: map.get($spacing, "xl");
+  min-height: 100vh;
+  position: relative;
+  
+  @include theme-aware("background-color", 
+    map.get($colors, "background", "default"),
+    map.get($colors, "background", "paper")
+  );
+}
+
+// ==========================================================================
+// Request Grid Layout
+// ==========================================================================
+
+.marketplace-grid {
+  display: grid;
+  gap: map.get($spacing, "md");
+  padding: map.get($spacing, "md") 0;
+  
+  // Accessible grid layout with responsive columns
+  @include respond-to("mobile") {
+    grid-template-columns: 1fr;
+  }
+
+  @include respond-to("tablet") {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to("desktop") {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  // Accessibility attributes
+  [role="list"] {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+// ==========================================================================
+// Request Card Component
+// ==========================================================================
+
+.request-card {
+  @include elevation(1);
+  @include focus-ring(map.get($colors, "primary", "main"));
+  
+  padding: map.get($spacing, "lg");
+  border-radius: map.get($border-radius, "medium");
+  position: relative;
+  
+  @include theme-aware("background-color", 
+    map.get($colors, "surface", "main"),
+    map.get($colors, "surface", "hover")
+  );
+
+  // Interactive states
+  &:hover {
+    @include elevation(2);
+    cursor: pointer;
+  }
+
+  // Typography
+  &__title {
+    @include typography("h3");
+    margin-bottom: map.get($spacing, "sm");
+    color: map.get($colors, "text", "primary");
+  }
+
+  &__description {
+    @include typography("body1");
+    margin-bottom: map.get($spacing, "md");
+    color: map.get($colors, "text", "secondary");
+  }
+
+  &__price {
+    @include typography("h2");
+    color: map.get($colors, "primary", "main");
+    margin-bottom: map.get($spacing, "sm");
+  }
+
+  // Accessibility
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px map.get($colors, "primary", "main");
+  }
+}
+
+// ==========================================================================
+// Price Calculator Component
+// ==========================================================================
+
+.price-calculator {
+  @include elevation(1);
+  padding: map.get($spacing, "lg");
+  border-radius: map.get($border-radius, "medium");
+  
+  @include theme-aware("background-color", 
+    map.get($colors, "surface", "main"),
+    map.get($colors, "surface", "hover")
+  );
+
+  @include theme-aware("border", 
+    1px solid map.get($colors, "border", "light"),
+    1px solid map.get($colors, "border", "medium")
+  );
+
+  &__title {
+    @include typography("h2");
+    margin-bottom: map.get($spacing, "md");
+    color: map.get($colors, "text", "primary");
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: map.get($spacing, "md");
+  }
+
+  &__input-group {
+    position: relative;
+
+    label {
+      @include typography("body2");
+      display: block;
+      margin-bottom: map.get($spacing, "xs");
+      color: map.get($colors, "text", "secondary");
+    }
+
+    input {
+      width: 100%;
+      padding: map.get($spacing, "sm");
+      border-radius: map.get($border-radius, "small");
+      min-height: 44px; // Accessibility - touch target size
+      
+      @include theme-aware("border", 
+        1px solid map.get($colors, "border", "medium"),
+        1px solid map.get($colors, "border", "dark")
+      );
+
+      &:focus {
+        @include focus-ring(map.get($colors, "primary", "main"));
+      }
+    }
+  }
+
+  &__result {
+    margin-top: map.get($spacing, "lg");
+    padding: map.get($spacing, "md");
+    border-radius: map.get($border-radius, "small");
+    
+    @include theme-aware("background-color", 
+      map.get($colors, "surface", "selected"),
+      map.get($colors, "surface", "hover")
+    );
+
+    &-text {
+      @include typography("h3");
+      color: map.get($colors, "primary", "main");
+      text-align: center;
+    }
+  }
+}
+
+// ==========================================================================
+// Loading States
+// ==========================================================================
+
+.marketplace-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  
+  &__spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid map.get($colors, "primary", "light");
+    border-top-color: map.get($colors, "primary", "main");
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ==========================================================================
+// Error States
+// ==========================================================================
+
+.marketplace-error {
+  padding: map.get($spacing, "lg");
+  border-radius: map.get($border-radius, "medium");
+  text-align: center;
+  
+  @include theme-aware("background-color", 
+    map.get($colors, "semantic", "error"),
+    darken(map.get($colors, "semantic", "error"), 10%)
+  );
+
+  &__message {
+    @include typography("body1");
+    color: map.get($colors, "background", "default");
+  }
+}
+
+// ==========================================================================
+// Print Styles
+// ==========================================================================
+
+@media print {
+  .marketplace {
+    background: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .request-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid map.get($colors, "border", "medium");
+  }
+
+  .price-calculator {
+    display: none;
+  }
+}

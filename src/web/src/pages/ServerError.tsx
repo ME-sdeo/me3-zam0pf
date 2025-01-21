@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'; // ^18.0.0
 import { useNavigate } from 'react-router-dom'; // ^6.0.0
-import Button from '../../components/common/Button';
-import PageHeader from '../../components/common/PageHeader';
+import Button from '../components/common/Button';
+import PageHeader from '../components/common/PageHeader';
 
 import styles from './ServerError.module.scss';
 

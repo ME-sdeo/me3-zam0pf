@@ -24,9 +24,11 @@ const BLOCKCHAIN_RETRY_ATTEMPTS = 3;
  */
 export class MarketplaceService {
   private readonly logger: Logger;
+  private readonly blockchainClient: any;
 
-  constructor(logger: Logger) {
+  constructor(logger: Logger, blockchainClient: any) {
     this.logger = logger;
+    this.blockchainClient = blockchainClient;
   }
 
   /**
@@ -247,5 +249,8 @@ export class MarketplaceService {
   }
 }
 
-// Export singleton instance
-export default MarketplaceService;
+// Export singleton instance with required dependencies
+export default new MarketplaceService(
+  new Logger('MarketplaceService'),
+  {} // Placeholder for blockchain client, should be injected from a provider
+);

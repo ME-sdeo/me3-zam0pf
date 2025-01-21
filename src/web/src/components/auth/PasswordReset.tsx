@@ -5,21 +5,22 @@ import * as yup from 'yup';
 import { AuthService } from '../../services/auth.service';
 import Button from '../common/Button';
 import Alert from '../common/Alert';
+import { PublicClientApplication } from '@azure/msal-browser';
 
 // Password validation schema with HIPAA compliance
-const passwordSchema = yup.object().shape({
+const schema = yup.object().shape({
   email: yup.string()
     .email('Please enter a valid email address')
     .required('Email is required'),
   resetToken: yup.string()
-    .when('step', {
+    .when('$step', {
       is: 'reset',
-      then: yup.string().required('Reset token is required')
+      then: schema => schema.required('Reset token is required')
     }),
   newPassword: yup.string()
-    .when('step', {
+    .when('$step', {
       is: 'reset',
-      then: yup.string()
+      then: schema => schema
         .required('New password is required')
         .min(12, 'Password must be at least 12 characters')
         .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -29,9 +30,9 @@ const passwordSchema = yup.object().shape({
         .notOneOf(['Password123!', 'Admin123!'], 'Please use a stronger password')
     }),
   confirmPassword: yup.string()
-    .when('step', {
+    .when('$step', {
       is: 'reset',
-      then: yup.string()
+      then: schema => schema
         .required('Please confirm your password')
         .oneOf([yup.ref('newPassword')], 'Passwords must match')
     })
@@ -53,7 +54,7 @@ const PasswordReset: React.FC = () => {
   const [attemptCount, setAttemptCount] = useState(0);
   const [lastAttemptTime, setLastAttemptTime] = useState<Date | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<PasswordResetFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<PasswordResetFormData>({
     mode: 'onChange',
     defaultValues: {
       email: '',
@@ -84,7 +85,18 @@ const PasswordReset: React.FC = () => {
         throw new Error('Too many attempts. Please try again in 5 minutes.');
       }
 
-      const authService = new AuthService();
+      const msalConfig = {
+        b2cTenantName: process.env.REACT_APP_B2C_TENANT_NAME || '',
+        clientId: process.env.REACT_APP_CLIENT_ID || '',
+        apiScopes: ['user.read']
+      };
+      const msalClient = new PublicClientApplication({
+        auth: {
+          clientId: msalConfig.clientId,
+          authority: `https://${msalConfig.b2cTenantName}.b2clogin.com/${msalConfig.b2cTenantName}.onmicrosoft.com/v2.0`
+        }
+      });
+      const authService = new AuthService(msalClient, msalConfig);
 
       if (step === 'request') {
         await authService.validateResetToken(data.email);
@@ -117,7 +129,18 @@ const PasswordReset: React.FC = () => {
       setError(err instanceof Error ? err.message : 'An error occurred');
 
       // Log security event
-      const authService = new AuthService();
+      const msalConfig = {
+        b2cTenantName: process.env.REACT_APP_B2C_TENANT_NAME || '',
+        clientId: process.env.REACT_APP_CLIENT_ID || '',
+        apiScopes: ['user.read']
+      };
+      const msalClient = new PublicClientApplication({
+        auth: {
+          clientId: msalConfig.clientId,
+          authority: `https://${msalConfig.b2cTenantName}.b2clogin.com/${msalConfig.b2cTenantName}.onmicrosoft.com/v2.0`
+        }
+      });
+      const authService = new AuthService(msalClient, msalConfig);
       await authService.logSecurityEvent({
         eventType: 'PASSWORD_RESET_FAILED',
         userIdentifier: data.email,

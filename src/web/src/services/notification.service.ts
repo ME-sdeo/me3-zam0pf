@@ -1,9 +1,9 @@
 import { io, Socket } from 'socket.io-client'; // ^4.6.0
-import { Logger } from 'winston'; // ^3.8.0
+import { Logger, createLogger, format } from 'winston'; // ^3.8.0
 import NodeCache from 'node-cache'; // ^5.1.2
 import axiosInstance from '../utils/api.util';
 import { apiConfig } from '../config/api.config';
-import { API_ENDPOINTS, HTTP_HEADERS } from '../constants/api.constants';
+import { API_ENDPOINTS } from '../constants/api.constants';
 
 /**
  * Interface for notification data structure
@@ -69,14 +69,14 @@ class NotificationService {
     });
 
     // Initialize logger
-    this.logger = Logger.createLogger({
+    this.logger = createLogger({
       level: 'info',
-      format: Logger.format.json(),
+      format: format.json(),
       defaultMeta: { service: 'notification-service' }
     });
 
     // Set up cache error handling
-    this.cache.on('error', (err) => {
+    this.cache.on('error', (err: Error) => {
       this.logger.error('Cache error:', err);
     });
   }
@@ -142,7 +142,7 @@ class NotificationService {
   /**
    * Establishes secure WebSocket connection with retry mechanism
    */
-  public async connectWebSocket(userId: string, options: ConnectionOptions = {
+  public async connectWebSocket(userId: string, options: Partial<ConnectionOptions> = {
     reconnection: true,
     reconnectionAttempts: this.MAX_RECONNECT_ATTEMPTS,
     reconnectionDelay: 1000,
@@ -156,7 +156,6 @@ class NotificationService {
     
     this.socket = io(wsUrl, {
       transports: ['websocket'],
-      secure: options.secure,
       rejectUnauthorized: true,
       auth: {
         userId,
@@ -232,7 +231,7 @@ class NotificationService {
   private handleNewNotification(notification: Notification): void {
     // Update cache with new notification
     const cacheKeys = this.cache.keys();
-    cacheKeys.forEach(key => {
+    cacheKeys.forEach((key: string) => {
       if (key.startsWith('notifications_')) {
         const cached = this.cache.get<NotificationResponse>(key);
         if (cached) {
@@ -257,7 +256,7 @@ class NotificationService {
     updates: Partial<Notification>
   ): void {
     const cacheKeys = this.cache.keys();
-    cacheKeys.forEach(key => {
+    cacheKeys.forEach((key: string) => {
       if (key.startsWith('notifications_')) {
         const cached = this.cache.get<NotificationResponse>(key);
         if (cached) {

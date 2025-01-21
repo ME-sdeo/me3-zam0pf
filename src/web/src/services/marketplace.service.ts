@@ -5,12 +5,11 @@
  */
 
 import { Logger } from '@azure/logger'; // @azure/logger ^1.0.0
-import { BlockchainClient } from '@hyperledger/fabric-gateway'; // @hyperledger/fabric-gateway ^2.2.0
+import { RequestStatus, TransactionStatus } from '../types/marketplace.types';
 import { UUID } from 'crypto';
 
 import * as marketplaceApi from '../api/marketplace.api';
 import { IDataRequest } from '../interfaces/marketplace.interface';
-import { RequestStatus, MatchStatus, TransactionStatus } from '../types/marketplace.types';
 import { FHIRValidationErrorType } from '../types/fhir.types';
 
 // Global constants for marketplace operations
@@ -25,11 +24,9 @@ const BLOCKCHAIN_RETRY_ATTEMPTS = 3;
  */
 export class MarketplaceService {
   private readonly logger: Logger;
-  private readonly blockchainClient: BlockchainClient;
 
-  constructor(logger: Logger, blockchainClient: BlockchainClient) {
+  constructor(logger: Logger) {
     this.logger = logger;
-    this.blockchainClient = blockchainClient;
   }
 
   /**
@@ -156,7 +153,12 @@ export class MarketplaceService {
    * @param filterCriteria - Request criteria
    * @returns Price calculation
    */
-  public async calculateRequestPrice(filterCriteria: IDataRequest['filterCriteria']) {
+  public async calculateRequestPrice(filterCriteria: {
+    resourceTypes: string[];
+    demographics: any;
+    conditions: string[];
+    dateRange: { startDate: Date; endDate: Date };
+  }) {
     try {
       const pricing = await marketplaceApi.calculatePrice(filterCriteria);
 

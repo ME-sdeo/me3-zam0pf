@@ -8,6 +8,33 @@ import apiService from '../services/api.service';
 import { IDataRequest, IDataMatch, isValidDataRequest } from '../interfaces/marketplace.interface';
 import { API_ENDPOINTS } from '../constants/api.constants';
 import { UUID } from 'crypto';
+import { IFHIRValidationResult } from '../interfaces/fhir.interface';
+import { FHIR_VALIDATION_RULES } from '../constants/fhir.constants';
+
+/**
+ * Validates FHIR resources against R4 specification
+ * @param resource - FHIR resource to validate
+ * @returns Promise resolving to validation result
+ */
+export const validateFHIR = async (resource: any): Promise<IFHIRValidationResult> => {
+  try {
+    const response = await apiService.post<IFHIRValidationResult>(
+      API_ENDPOINTS.FHIR.VALIDATE,
+      resource,
+      {
+        requiresAuth: true,
+        headers: {
+          'X-Validation-Mode': FHIR_VALIDATION_RULES.STRICT_MODE ? 'strict' : 'normal'
+        }
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error validating FHIR resource:', error);
+    throw error;
+  }
+};
 
 /**
  * Creates a new HIPAA-compliant data request in the marketplace

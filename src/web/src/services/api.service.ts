@@ -56,7 +56,7 @@ export class ApiService {
         query: false,
         methods: ['POST', 'PUT', 'DELETE', 'PATCH']
       },
-      key: req => {
+      key: (req: { url?: string; method?: string; headers?: any; params?: any }) => {
         const serialized = JSON.stringify({
           url: req.url,
           method: req.method,
@@ -82,7 +82,7 @@ export class ApiService {
 
     // Request interceptor for authentication and request signing
     this.axiosInstance.interceptors.request.use(
-      async (config) => {
+      async (config: RequestConfig) => {
         const requestId = uuidv4();
         config.headers['X-Request-ID'] = requestId;
 

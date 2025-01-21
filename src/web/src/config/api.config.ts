@@ -1,5 +1,3 @@
-import axiosRetry from 'axios-retry';
-
 /**
  * Current API version
  * @constant {string}

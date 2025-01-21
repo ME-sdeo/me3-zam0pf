@@ -14,8 +14,6 @@ import {
   IconButton,
 } from '@mui/material';
 import {
-  ArrowUpward as SortIcon,
-  Visibility as ViewIcon,
   GetApp as ExportIcon,
   Lock as SensitiveIcon,
 } from '@mui/icons-material';
@@ -54,8 +52,6 @@ interface SortConfig {
 }
 
 // FHIR data formatting utility
-const fhirClient = new FHIRClient();
-
 const formatFHIRValue = (value: any, fhirType?: string): string => {
   if (!value) return '';
   

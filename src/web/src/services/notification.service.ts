@@ -140,6 +140,35 @@ class NotificationService {
   }
 
   /**
+   * Deletes a notification and updates cache
+   */
+  public async deleteNotification(notificationId: string): Promise<void> {
+    try {
+      await axiosInstance.delete(
+        `${API_ENDPOINTS.MARKETPLACE.NOTIFICATIONS}/${notificationId}`
+      );
+      
+      // Remove notification from all cached pages
+      const cacheKeys = this.cache.keys();
+      cacheKeys.forEach((key: string) => {
+        if (key.startsWith('notifications_')) {
+          const cached = this.cache.get<NotificationResponse>(key);
+          if (cached) {
+            cached.notifications = cached.notifications.filter(
+              notification => notification.id !== notificationId
+            );
+            cached.total -= 1;
+            this.cache.set(key, cached);
+          }
+        }
+      });
+    } catch (error) {
+      this.logger.error('Error deleting notification:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Establishes secure WebSocket connection with retry mechanism
    */
   public async connectWebSocket(userId: string, options: Partial<ConnectionOptions> = {

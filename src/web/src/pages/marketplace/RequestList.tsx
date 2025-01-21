@@ -15,8 +15,6 @@ import PageHeader from '../../components/common/PageHeader';
 import useMarketplace from '../../hooks/useMarketplace';
 import { IDataRequest } from '../../interfaces/marketplace.interface';
 import { RequestStatus } from '../../types/marketplace.types';
-import { withErrorBoundary } from '../../utils/error.util';
-import { withAuditLogging } from '../../utils/audit.util';
 
 /**
  * RequestList page component for displaying healthcare data marketplace requests
@@ -25,7 +23,7 @@ import { withAuditLogging } from '../../utils/audit.util';
 const RequestList: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [selectedFilters, setSelectedFilters] = useState<RequestFilterProps>({
+  const [selectedFilters] = useState({
     status: [RequestStatus.ACTIVE, RequestStatus.MATCHING],
     dateRange: {
       startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
@@ -73,7 +71,7 @@ const RequestList: React.FC = () => {
   const handleRequestSelect = useCallback(async (request: IDataRequest) => {
     try {
       navigate(`/marketplace/requests/${request.id}`, {
-        state: { blockchainRef: request.blockchainRef }
+        state: { transactionId: request.id }
       });
     } catch (error) {
       console.error('Error navigating to request details:', error);
@@ -172,7 +170,4 @@ const RequestList: React.FC = () => {
   );
 };
 
-// Export with error boundary and audit logging
-export default withErrorBoundary(
-  withAuditLogging(RequestList, 'RequestList')
-);
+export default RequestList;

@@ -22,7 +22,7 @@ interface ButtonProps {
   confirmationRequired?: boolean;
 }
 
-const getButtonClasses = (props: ButtonProps): string => {
+const getButtonClasses = (props: Omit<ButtonProps, 'children'>): string => {
   const {
     variant = 'primary',
     fullWidth,
@@ -37,11 +37,11 @@ const getButtonClasses = (props: ButtonProps): string => {
   return classNames(
     styles.button,
     {
-      [styles['button--primary']]: variant === 'primary',
-      [styles['button--secondary']]: variant === 'secondary',
-      [styles['button--outline']]: variant === 'outline',
-      [styles['button--critical']]: variant === 'critical',
-      [styles['button--consent-required']]: variant === 'consent-required' || requiresConsent,
+      [styles.buttonPrimary]: variant === 'primary',
+      [styles.buttonSecondary]: variant === 'secondary',
+      [styles.buttonOutline]: variant === 'outline',
+      [styles.buttonCritical]: variant === 'critical',
+      [styles.buttonConsentRequired]: variant === 'consent-required' || requiresConsent,
       'button--full-width': fullWidth,
       'button--disabled': disabled,
       'button--loading': loading,
@@ -102,7 +102,6 @@ export const Button: React.FC<ButtonProps> = ({
       data-transaction-pending={transactionPending}
       data-medical-environment={medicalEnvironment}
       style={{
-        // Enhanced touch target size for medical environments
         minHeight: medicalEnvironment ? '48px' : undefined,
         minWidth: medicalEnvironment ? '48px' : undefined,
       }}

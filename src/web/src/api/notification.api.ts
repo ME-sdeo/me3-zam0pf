@@ -138,7 +138,7 @@ export const markNotificationRead = async (notificationId: string): Promise<void
 /**
  * Establishes secure WebSocket connection with token authentication and retry logic
  */
-export const subscribeToNotifications = (userId: string, authToken: string): Socket => {
+export const subscribeToNotifications = (userId: string, authToken: string): Promise<Socket> => {
   const operation = retry.operation({
     retries: 3,
     factor: 2,
@@ -146,10 +146,10 @@ export const subscribeToNotifications = (userId: string, authToken: string): Soc
     maxTimeout: 5000
   });
 
-  return new Promise((resolve, reject) => {
-    operation.attempt(async (currentAttempt) => {
+  return new Promise<Socket>((resolve, reject) => {
+    operation.attempt(() => {
       try {
-        const socket = io(apiConfig.wsURL, {
+        const socket = io(apiConfig.baseURL.replace('http', 'ws'), {
           auth: {
             token: authToken
           },

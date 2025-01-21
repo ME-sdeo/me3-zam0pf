@@ -9,11 +9,11 @@ import PageHeader from '../components/common/PageHeader';
 
 import {
   unauthorized,
-  'unauthorized__content': unauthorizedContent,
-  'unauthorized__message': unauthorizedMessage,
-  'unauthorized__actions': unauthorizedActions,
-  'unauthorized__high-contrast': unauthorizedHighContrast,
-  'unauthorized__reduced-motion': unauthorizedReducedMotion,
+  unauthorized__content as unauthorizedContent,
+  unauthorized__message as unauthorizedMessage,
+  unauthorized__actions as unauthorizedActions,
+  unauthorized__high_contrast as unauthorizedHighContrast,
+  unauthorized__reduced_motion as unauthorizedReducedMotion,
 } from '../styles/pages/_unauthorized.scss';
 
 const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (

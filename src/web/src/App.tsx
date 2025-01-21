@@ -98,60 +98,61 @@ const App: React.FC = () => {
       {/* Accessibility enhancements */}
       <div aria-live="polite" className="sr-only" role="status" id="app-announcer" />
       
-      {/* Global styles */}
-      <style jsx global>{`
-        :root {
-          --app-max-width: 1440px;
-          --app-min-height: 100vh;
-        }
-
-        .app-container {
-          min-height: var(--app-min-height);
-          display: flex;
-          flex-direction: column;
-        }
-
-        .sr-only {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          border: 0;
-        }
-
-        /* High contrast mode adjustments */
-        @media (prefers-contrast: high) {
+      <style>
+        {`
           :root {
-            --focus-ring-color: currentColor;
-            --focus-ring-width: 3px;
+            --app-max-width: 1440px;
+            --app-min-height: 100vh;
           }
 
-          *:focus {
-            outline: var(--focus-ring-width) solid var(--focus-ring-color);
-            outline-offset: 2px;
+          .app-container {
+            min-height: var(--app-min-height);
+            display: flex;
+            flex-direction: column;
           }
-        }
 
-        /* Reduced motion preferences */
-        @media (prefers-reduced-motion: reduce) {
-          * {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-            scroll-behavior: auto !important;
+          .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
           }
-        }
 
-        /* Medical device optimizations */
-        [data-medical-device="true"] {
-          font-size: 16px;
-          line-height: 1.5;
-          letter-spacing: 0.5px;
-        }
-      `}</style>
+          /* High contrast mode adjustments */
+          @media (prefers-contrast: high) {
+            :root {
+              --focus-ring-color: currentColor;
+              --focus-ring-width: 3px;
+            }
+
+            *:focus {
+              outline: var(--focus-ring-width) solid var(--focus-ring-color);
+              outline-offset: 2px;
+            }
+          }
+
+          /* Reduced motion preferences */
+          @media (prefers-reduced-motion: reduce) {
+            * {
+              animation-duration: 0.01ms !important;
+              animation-iteration-count: 1 !important;
+              transition-duration: 0.01ms !important;
+              scroll-behavior: auto !important;
+            }
+          }
+
+          /* Medical device optimizations */
+          [data-medical-device="true"] {
+            font-size: 16px;
+            line-height: 1.5;
+            letter-spacing: 0.5px;
+          }
+        `}
+      </style>
     </ErrorBoundary>
   );
 };

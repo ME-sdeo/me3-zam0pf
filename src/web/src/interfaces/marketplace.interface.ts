@@ -1,6 +1,6 @@
 import { UUID } from 'crypto'; // latest
 import { RequestStatus, MatchStatus, TransactionStatus } from '../types/marketplace.types';
-import { IFHIRResource } from './fhir.interface';
+import { FHIR_RESOURCE_TYPES } from '../constants/fhir.constants';
 
 /**
  * Interface for healthcare data request creation and management
@@ -12,7 +12,7 @@ export interface IDataRequest {
   title: string;
   description: string;
   filterCriteria: {
-    resourceTypes: Array<keyof typeof FHIRResourceType>;
+    resourceTypes: Array<keyof typeof FHIR_RESOURCE_TYPES>;
     demographics: {
       ageRange: {
         min: number;

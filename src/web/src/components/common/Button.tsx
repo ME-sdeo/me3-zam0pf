@@ -1,13 +1,6 @@
 import React from 'react'; // ^18.0.0
 import classNames from 'classnames'; // ^2.3.2
-import {
-  button,
-  'button--primary': buttonPrimary,
-  'button--secondary': buttonSecondary,
-  'button--outline': buttonOutline,
-  'button--critical': buttonCritical,
-  'button--consent-required': buttonConsentRequired
-} from '../../styles/components/_button.scss';
+import styles from '../../styles/components/_button.scss';
 
 // Type definitions for button props
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'critical' | 'consent-required';
@@ -42,13 +35,13 @@ const getButtonClasses = (props: ButtonProps): string => {
   } = props;
 
   return classNames(
-    button,
+    styles.button,
     {
-      [buttonPrimary]: variant === 'primary',
-      [buttonSecondary]: variant === 'secondary',
-      [buttonOutline]: variant === 'outline',
-      [buttonCritical]: variant === 'critical',
-      [buttonConsentRequired]: variant === 'consent-required' || requiresConsent,
+      [styles['button--primary']]: variant === 'primary',
+      [styles['button--secondary']]: variant === 'secondary',
+      [styles['button--outline']]: variant === 'outline',
+      [styles['button--critical']]: variant === 'critical',
+      [styles['button--consent-required']]: variant === 'consent-required' || requiresConsent,
       'button--full-width': fullWidth,
       'button--disabled': disabled,
       'button--loading': loading,

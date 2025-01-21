@@ -1,5 +1,4 @@
-import { Resource } from '@medplum/fhirtypes'; // @medplum/fhirtypes ^2.0.0
-import { FHIR_RESOURCE_TYPES, FHIR_VALIDATION_RULES } from '../constants/fhir.constants';
+import { FHIR_RESOURCE_TYPES } from '../constants/fhir.constants';
 
 /**
  * Type-safe enumeration of supported FHIR resource types

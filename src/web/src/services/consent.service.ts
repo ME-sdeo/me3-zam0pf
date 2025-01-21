@@ -20,6 +20,7 @@ import {
   updateConsentPermissions, 
   getUserConsents 
 } from '../api/consent.api';
+import { Resource } from '@medplum/fhirtypes';
 
 /**
  * Service class implementing secure consent management operations
@@ -41,7 +42,7 @@ export class ConsentService {
 
       // Validate FHIR resource types in permissions
       for (const resourceType of consentData.permissions.resourceTypes) {
-        const fhirValidation = await validateFHIRResource({ resourceType });
+        const fhirValidation = await validateFHIRResource({ resourceType } as Resource);
         if (!fhirValidation.valid) {
           throw new Error(`Invalid FHIR resource type: ${resourceType}`);
         }

@@ -6,6 +6,7 @@ import {
 } from '../interfaces/fhir.interface';
 import { validateFHIRResource, formatFHIRResource } from '../utils/fhir.util';
 import { fhirConfig } from '../config/fhir.config';
+import ApiService from './api.service';
 
 // Constants for FHIR service configuration
 const VALIDATION_TIMEOUT = 30000;
@@ -22,8 +23,10 @@ export class FHIRService {
   private readonly client: MedplumClient;
   private readonly resourceCache: Map<string, { data: IFHIRResource; timestamp: number }>;
   private readonly auditLogger: { info: (message: string, meta: any) => void; error: (message: string, meta: any) => void; };
+  private readonly apiService: ApiService;
 
-  constructor() {
+  constructor(apiService?: ApiService) {
+    this.apiService = apiService || new ApiService();
     this.client = new MedplumClient({
       baseUrl: fhirConfig.client.baseUrl,
       clientId: fhirConfig.client.clientId,

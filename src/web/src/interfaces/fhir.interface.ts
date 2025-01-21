@@ -1,9 +1,6 @@
 // @medplum/fhirtypes ^2.0.0
 import { Resource } from '@medplum/fhirtypes';
-import { 
-  FHIR_RESOURCE_TYPES, 
-  FHIR_VALIDATION_RULES 
-} from '../constants/fhir.constants';
+import { FHIR_RESOURCE_TYPES } from '../constants/fhir.constants';
 
 /**
  * Base interface for all FHIR resources in the frontend

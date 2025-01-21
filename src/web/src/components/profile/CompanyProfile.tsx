@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   TextField, 
   Button, 
@@ -11,14 +11,14 @@ import {
   MenuItem,
   Alert,
   Skeleton
-} from '@mui/material'; // ^5.0.0
+} from '@mui/material';
 import { 
   Edit as EditIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
   Warning as WarningIcon
-} from '@mui/icons-material'; // ^5.0.0
-import { format, isAfter, addMonths } from 'date-fns'; // ^2.30.0
+} from '@mui/icons-material';
+import { format, isAfter, addMonths } from 'date-fns';
 
 import { Card } from '../common/Card';
 import { 
@@ -30,6 +30,7 @@ import {
 import { useNotification } from '../../hooks/useNotification';
 import axiosInstance from '../../utils/api.util';
 import { API_ENDPOINTS } from '../../constants/api.constants';
+import type { Notification } from '../../services/notification.service';
 
 interface ICompanyProfileProps {
   companyId: string;
@@ -47,7 +48,7 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
   onUpdate,
   onError
 }) => {
-  // State management
+  // Rest of the component code remains exactly the same
   const [company, setCompany] = useState<ICompany | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -55,10 +56,8 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [certificationStatus, setCertificationStatus] = useState<Record<string, boolean>>({});
 
-  // Hooks
   const { notifications, markAsRead } = useNotification();
 
-  // Fetch company data
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
@@ -75,7 +74,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
     fetchCompanyData();
   }, [companyId, onError]);
 
-  // Validate certifications and set status
   const validateCertifications = useCallback((certifications: ICompanyCertification[]) => {
     const status: Record<string, boolean> = {};
     const today = new Date();
@@ -85,7 +83,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
       const expiryDate = new Date(cert.expiresAt);
       status[cert.type] = isAfter(expiryDate, today);
 
-      // Notify if certification is expiring soon
       if (isAfter(expiryDate, today) && !isAfter(expiryDate, warningThreshold)) {
         const notification = notifications.find(
           n => n.metadata.certificationType === cert.type && !n.read
@@ -99,11 +96,9 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
     setCertificationStatus(status);
   }, [notifications, markAsRead]);
 
-  // Form validation
   const validateForm = useCallback((profile: ICompanyProfile): boolean => {
     const errors: Record<string, string> = {};
 
-    // Required fields validation
     if (!profile.description.trim()) {
       errors.description = 'Description is required';
     }
@@ -118,7 +113,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
       errors.phone = 'Invalid phone number format';
     }
 
-    // Address validation
     if (!profile.address.street.trim()) errors['address.street'] = 'Street is required';
     if (!profile.address.city.trim()) errors['address.city'] = 'City is required';
     if (!profile.address.state.trim()) errors['address.state'] = 'State is required';
@@ -129,7 +123,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
     return Object.keys(errors).length === 0;
   }, []);
 
-  // Handle profile updates
   const handleProfileUpdate = async (updatedProfile: ICompanyProfile) => {
     if (!company || !validateForm(updatedProfile)) return;
 
@@ -153,7 +146,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
     }
   };
 
-  // Handle certification updates
   const handleCertificationUpdate = async (certifications: ICompanyCertification[]) => {
     if (!company) return;
 
@@ -170,7 +162,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
     }
   };
 
-  // Render loading state
   if (isLoading) {
     return (
       <Card>
@@ -200,7 +191,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
   return (
     <Card>
       <Grid container spacing={3}>
-        {/* Header */}
         <Grid item xs={12}>
           <Typography variant="h5" component="h2">
             Company Profile
@@ -216,7 +206,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
           </Typography>
         </Grid>
 
-        {/* Basic Information */}
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -253,7 +242,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
           </FormControl>
         </Grid>
 
-        {/* Contact Information */}
         <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             Contact Information
@@ -293,7 +281,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
           />
         </Grid>
 
-        {/* Address */}
         <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             Address
@@ -363,7 +350,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
           />
         </Grid>
 
-        {/* Certifications */}
         <Grid item xs={12}>
           <Typography variant="h6" gutterBottom>
             Certifications
@@ -387,7 +373,6 @@ export const CompanyProfile: React.FC<ICompanyProfileProps> = React.memo(({
           ))}
         </Grid>
 
-        {/* Save Button */}
         {isEditing && !readOnly && (
           <Grid item xs={12}>
             <Button

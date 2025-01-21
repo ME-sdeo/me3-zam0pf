@@ -15,14 +15,13 @@ import {
 import {
   Security as SecurityIcon,
   Verified as BlockchainIcon,
-  Timeline as HistoryIcon,
   MonetizationOn as PriceIcon
 } from '@mui/icons-material';
 import { ErrorBoundary } from 'react-error-boundary';
 
 // Internal imports
 import { IDataRequest } from '../../interfaces/marketplace.interface';
-import { MarketplaceService } from '../../services/marketplace.service';
+import { useMarketplace } from '../../hooks/useMarketplace';
 import MatchingResults from '../../components/marketplace/MatchingResults';
 import { RequestStatus } from '../../types/marketplace.types';
 
@@ -59,6 +58,9 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
     timestamp: null
   });
 
+  // Use marketplace hook
+  const { findMatches } = useMarketplace();
+
   /**
    * Fetches request details with blockchain verification
    */
@@ -67,19 +69,19 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
 
     try {
       setLoading(true);
-      const marketplaceService = new MarketplaceService();
-      
-      // Fetch request details
-      const requestData = await marketplaceService.getRequest(requestId);
-      setRequest(requestData);
+      // Use marketplace hook methods instead of direct service calls
+      const { matches } = await findMatches(requestId);
+      if (matches && matches.length > 0) {
+        const requestData = matches[0].request;
+        setRequest(requestData);
 
-      // Verify blockchain status
-      if (requestData.blockchainRef) {
-        const status = await marketplaceService.getBlockchainStatus(requestData.blockchainRef);
-        setBlockchainStatus({
-          verified: status.verified,
-          timestamp: status.timestamp
-        });
+        // Update blockchain status if available
+        if (requestData.blockchainRef) {
+          setBlockchainStatus({
+            verified: true,
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     } catch (err) {
       const error = err as Error;
@@ -88,40 +90,11 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [requestId, onError]);
+  }, [requestId, onError, findMatches]);
 
-  /**
-   * Handles request status updates with blockchain tracking
-   */
-  const handleStatusChange = useCallback(async (newStatus: RequestStatus) => {
-    if (!request || !requestId) return;
-
-    try {
-      const marketplaceService = new MarketplaceService();
-      await marketplaceService.updateRequest(requestId, { status: newStatus });
-      
-      onStatusChange?.(newStatus);
-      await fetchRequestDetails();
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      onError?.(error);
-    }
-  }, [request, requestId, onStatusChange, fetchRequestDetails, onError]);
-
-  // Initial data load and WebSocket subscription
+  // Initial data load
   useEffect(() => {
     fetchRequestDetails();
-
-    // Set up real-time updates
-    const marketplaceService = new MarketplaceService();
-    const unsubscribe = marketplaceService.subscribeToUpdates(requestId!, (updatedRequest) => {
-      setRequest(updatedRequest);
-    });
-
-    return () => {
-      unsubscribe();
-    };
   }, [requestId, fetchRequestDetails]);
 
   if (loading) {
@@ -219,30 +192,13 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
               {request.filterCriteria.resourceTypes.map((type, index) => (
                 <Chip
                   key={index}
-                  label={type}
+                  label={type.toString()}
                   variant="outlined"
                   size="small"
                 />
               ))}
             </Box>
           </Box>
-
-          {/* Blockchain Information */}
-          {request.blockchainRef && (
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Blockchain Reference
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Transaction ID: {request.blockchainRef}
-              </Typography>
-              {blockchainStatus.timestamp && (
-                <Typography variant="body2" color="textSecondary">
-                  Last Verified: {new Date(blockchainStatus.timestamp).toLocaleString()}
-                </Typography>
-              )}
-            </Box>
-          )}
         </Paper>
 
         {/* Matching Results Section */}

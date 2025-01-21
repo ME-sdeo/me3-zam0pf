@@ -24,10 +24,10 @@ export enum NotificationActionTypes {
 // Action Creators
 export const fetchNotifications = createAsyncThunk<
   NotificationResponse,
-  { page: number; limit: number; forceRefresh?: boolean }
+  { page: number; limit: number }
 >(
   NotificationActionTypes.FETCH_NOTIFICATIONS_START,
-  async ({ page, limit, forceRefresh = false }, { rejectWithValue }) => {
+  async ({ page, limit }, { rejectWithValue }) => {
     try {
       const notificationService = NotificationService.getInstance();
       const response = await notificationService.getNotifications(page, limit);

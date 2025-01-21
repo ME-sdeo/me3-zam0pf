@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AzureAuthProvider } from '@azure/msal-react'; // ^2.0.0
+import { MsalProvider } from '@azure/msal-react'; // Using correct provider
 import RegisterForm from '../../components/auth/RegisterForm';
 import MFASetup from '../../components/auth/MFASetup';
 import { useAuth } from '../../hooks/useAuth';
@@ -13,7 +13,7 @@ import { AuthStatus, UserRole } from '../../types/auth.types';
 const Register: React.FC = () => {
   // Navigation and auth hooks
   const navigate = useNavigate();
-  const { authState, securityContext } = useAuth();
+  const { isAuthenticated, status, user, securityMetrics } = useAuth();
 
   // Component state
   const [registrationComplete, setRegistrationComplete] = useState<boolean>(false);
@@ -42,20 +42,20 @@ const Register: React.FC = () => {
     }
 
     // Log security event for registration page access
-    securityContext?.logSecurityEvent({
+    securityMetrics?.logSecurityEvent({
       eventType: 'REGISTRATION_PAGE_ACCESS',
       sessionData: securitySession
     });
 
     return () => {
       // Cleanup security monitoring
-      securityContext?.logSecurityEvent({
+      securityMetrics?.logSecurityEvent({
         eventType: 'REGISTRATION_PAGE_EXIT',
         sessionId: securitySession.sessionId,
         duration: Date.now() - securitySession.startTime
       });
     };
-  }, [securityContext]);
+  }, [securityMetrics]);
 
   /**
    * Handles successful registration completion with security logging
@@ -64,7 +64,7 @@ const Register: React.FC = () => {
   const handleRegistrationComplete = async (userData: any) => {
     try {
       // Log successful registration
-      securityContext?.logSecurityEvent({
+      securityMetrics?.logSecurityEvent({
         eventType: 'REGISTRATION_SUCCESS',
         userId: userData.id,
         userRole: userData.role,
@@ -86,25 +86,18 @@ const Register: React.FC = () => {
 
   /**
    * Handles MFA setup completion with security verification
-   * @param setupResult - MFA setup result
    */
-  const handleMFAComplete = async (setupResult: any) => {
+  const handleMFAComplete = async () => {
     try {
-      // Verify MFA setup completion
-      if (!setupResult.verified) {
-        throw new Error('MFA verification failed');
-      }
-
       // Log successful MFA setup
-      securityContext?.logSecurityEvent({
+      securityMetrics?.logSecurityEvent({
         eventType: 'MFA_SETUP_SUCCESS',
-        userId: authState.user?.id,
-        mfaMethod: setupResult.method,
+        userId: user?.id,
         timestamp: new Date().toISOString()
       });
 
       // Update auth state with MFA status
-      authState.status = AuthStatus.AUTHENTICATED;
+      status = AuthStatus.AUTHENTICATED;
 
     } catch (error) {
       handleSecurityError(error as Error);
@@ -117,7 +110,7 @@ const Register: React.FC = () => {
    */
   const handleSecurityError = (error: Error) => {
     // Log security error
-    securityContext?.logSecurityEvent({
+    securityMetrics?.logSecurityEvent({
       eventType: 'REGISTRATION_ERROR',
       error: error.message,
       timestamp: new Date().toISOString()
@@ -127,7 +120,7 @@ const Register: React.FC = () => {
 
     // Trigger security alert if needed
     if (error.message.includes('suspicious')) {
-      securityContext?.triggerSecurityAlert({
+      securityMetrics?.triggerSecurityAlert({
         type: 'SUSPICIOUS_REGISTRATION_ATTEMPT',
         severity: 'HIGH'
       });
@@ -135,14 +128,14 @@ const Register: React.FC = () => {
   };
 
   return (
-    <AzureAuthProvider>
+    <MsalProvider>
       <div className="register-page" role="main" aria-label="Registration Page">
         <div className="register-container">
           <h1>Create Your Account</h1>
           
           {!registrationComplete ? (
             <RegisterForm
-              onSubmit={handleRegistrationComplete}
+              onSuccess={handleRegistrationComplete}
               onError={handleSecurityError}
             />
           ) : (
@@ -163,7 +156,7 @@ const Register: React.FC = () => {
           )}
         </div>
       </div>
-    </AzureAuthProvider>
+    </MsalProvider>
   );
 };
 

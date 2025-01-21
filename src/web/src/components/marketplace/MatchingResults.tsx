@@ -11,7 +11,6 @@ import {
   IconButton
 } from '@mui/material';
 import {
-  Assessment as ScoreIcon,
   Security as SecurityIcon,
   Refresh as RefreshIcon,
   Download as ExportIcon
@@ -47,12 +46,10 @@ const MatchingResults: React.FC<MatchingResultsProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // State management
-  const [sortField, setSortField] = useState<string>('score');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // Marketplace hook for data management
-  const { matches, loading, findMatches, subscribeToUpdates } = useMarketplace();
+  const { matches, loading, findMatches } = useMarketplace();
 
   // Table columns configuration with security and accessibility
   const columns = useMemo(() => [
@@ -107,19 +104,13 @@ const MatchingResults: React.FC<MatchingResultsProps> = ({
       )
     },
     {
-      field: 'lastUpdated',
+      field: 'createdAt',
       header: 'Last Updated',
       sortable: true,
       width: '180px',
       render: (value: Date) => new Date(value).toLocaleString()
     }
   ], [isMobile]);
-
-  // Sort handler with security validation
-  const handleSort = useCallback((field: string, direction: 'asc' | 'desc') => {
-    setSortField(field);
-    setSortDirection(direction);
-  }, []);
 
   // Manual refresh handler with rate limiting
   const handleRefresh = useCallback(async () => {
@@ -136,7 +127,7 @@ const MatchingResults: React.FC<MatchingResultsProps> = ({
       id: match.id,
       score: match.score,
       matchedCriteria: match.matchedCriteria,
-      lastUpdated: match.lastUpdated
+      createdAt: match.createdAt
     }));
     
     const blob = new Blob([JSON.stringify(secureMatches, null, 2)], {
@@ -156,17 +147,15 @@ const MatchingResults: React.FC<MatchingResultsProps> = ({
   // Initial data load and real-time updates
   useEffect(() => {
     findMatches(requestId);
-    const unsubscribe = subscribeToUpdates(requestId);
     
     const refreshTimer = setInterval(() => {
       handleRefresh();
     }, refreshInterval);
 
     return () => {
-      unsubscribe();
       clearInterval(refreshTimer);
     };
-  }, [requestId, findMatches, subscribeToUpdates, refreshInterval, handleRefresh]);
+  }, [requestId, findMatches, refreshInterval, handleRefresh]);
 
   // Filter matches based on minimum score
   const filteredMatches = useMemo(() => 
@@ -226,7 +215,6 @@ const MatchingResults: React.FC<MatchingResultsProps> = ({
         loading={loading}
         pagination
         virtualScroll={filteredMatches.length > 100}
-        onSort={handleSort}
         onRowSelect={onMatchSelect}
         onExport={handleExport}
       />

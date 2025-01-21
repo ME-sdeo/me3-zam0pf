@@ -1,14 +1,13 @@
-import { PublicClientApplication, AuthenticationResult, InteractionRequiredAuthError } from '@azure/msal-browser'; // @azure/msal-browser ^2.32.0
-import { AuthError as MSALAuthError } from '@azure/msal-browser/error'; // @azure/msal-browser ^2.32.0
-import { BehaviorSubject, Observable, timer, Subscription } from 'rxjs'; // rxjs ^7.8.0
-import { createLogger, format, transports } from 'winston'; // winston ^3.8.0
-import jwt from 'jsonwebtoken'; // jsonwebtoken ^9.0.0
+import { PublicClientApplication, AuthenticationResult, InteractionRequiredAuthError } from '@azure/msal-browser';
+import { AuthError as MSALAuthError } from '@azure/msal-browser';
+import { BehaviorSubject, Observable, timer, Subscription } from 'rxjs';
+import { createLogger, format, transports } from 'winston';
+import jwt from 'jsonwebtoken';
 
 import { 
     IAuthState, 
     IAuthUser, 
     IAuthTokens, 
-    IMFAConfig, 
     ILoginCredentials 
 } from '../interfaces/auth.interface';
 import { 
@@ -16,13 +15,8 @@ import {
     MFAMethod, 
     AuthStatus, 
     AuthError,
-    AUTH_TOKEN_KEY,
-    REFRESH_TOKEN_KEY,
-    MFA_SESSION_KEY,
-    AUTH_STATE_KEY,
     MFAChallengeResponse,
-    MFAVerificationPayload,
-    ExtendedAccountInfo
+    MFAVerificationPayload
 } from '../types/auth.types';
 
 // Constants for authentication configuration
@@ -256,7 +250,7 @@ export class AuthService {
     private async handleAuthenticationResult(result: AuthenticationResult): Promise<void> {
         const tokens: IAuthTokens = {
             accessToken: result.accessToken,
-            refreshToken: result.refreshToken || '',
+            refreshToken: '', // MSAL v2 doesn't expose refresh token
             idToken: result.idToken,
             expiresIn: result.expiresOn?.getTime() || 0,
             tokenType: result.tokenType,

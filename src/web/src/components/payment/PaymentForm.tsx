@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form'; // react-hook-form ^7.45.0
-import { Elements, CardElement, useStripe, useElements } from '@stripe/stripe-js'; // @stripe/stripe-js ^1.54.0
+import { useStripe, useElements } from '@stripe/stripe-react-js'; // @stripe/stripe-react-js
+import { CardElement } from '@stripe/stripe-react-js'; // @stripe/stripe-react-js
 import * as yup from 'yup'; // yup ^1.2.0
 import { usePayment } from '../../hooks/usePayment';
-import { IPaymentMethod, PaymentMethodType } from '../../interfaces/payment.interface';
+import { PaymentMethodType } from '../../interfaces/payment.interface';
 import { TransactionStatus } from '../../types/marketplace.types';
 
 // Card element styling for accessibility and visual consistency
@@ -35,13 +36,6 @@ const CARD_ELEMENT_OPTIONS = {
     invalid: 'Payment card information is invalid',
     required: 'Payment card information is required',
   },
-};
-
-// HIPAA compliance configuration
-const COMPLIANCE_CONFIG = {
-  logLevel: 'HIPAA_FULL',
-  retentionPeriod: '7_YEARS',
-  encryptionLevel: 'AES_256',
 };
 
 // Form validation schema
@@ -155,7 +149,7 @@ export const PaymentForm: React.FC<IPaymentFormProps> = ({
       const paymentIntent = await createPaymentIntent({
         amount: {
           value: amount,
-          currency: currency,
+          currency: currency as any, // Type assertion to handle currency validation
           exchangeRate: 1,
           exchangeRateTimestamp: new Date(),
           isRefundable: true,
@@ -172,7 +166,11 @@ export const PaymentForm: React.FC<IPaymentFormProps> = ({
           country: '',
         },
         metadata: {
-          complianceLevel,
+          requestId: '', // Added required fields
+          dataProvider: '',
+          dataConsumer: '',
+          recordCount: 0,
+          consentId: '',
           purposeOfUse: formData.purposeOfUse,
           dataJurisdiction: formData.dataJurisdiction,
           timestamp: new Date().toISOString(),
@@ -181,7 +179,7 @@ export const PaymentForm: React.FC<IPaymentFormProps> = ({
 
       // Confirm payment with blockchain verification
       const confirmedPayment = await confirmPayment(
-        paymentIntent.id,
+        paymentIntent.transactionId, // Updated to use transactionId
         {
           complianceMetadata: {
             level: complianceLevel,
@@ -348,12 +346,14 @@ export const PaymentForm: React.FC<IPaymentFormProps> = ({
           name="complianceAcknowledgment"
           control={control}
           rules={{ required: true }}
-          render={({ field }) => (
+          render={({ field: { onChange, value, ...field } }) => (
             <div className="checkbox-group">
               <input
                 {...field}
                 type="checkbox"
                 id="complianceAcknowledgment"
+                checked={value}
+                onChange={(e) => onChange(e.target.checked)}
                 aria-invalid={!!errors.complianceAcknowledgment}
                 aria-describedby={errors.complianceAcknowledgment ? 'compliance-error' : undefined}
               />

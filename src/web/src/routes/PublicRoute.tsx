@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';  // react ^18.0.0
 import { Navigate } from 'react-router-dom';  // react-router-dom ^6.8.0
-import { SecurityMetrics } from '@security/metrics';  // @security/metrics ^1.0.0
+import { SecurityMetrics } from '../utils/security';  // Using local security utils instead
 
 import useAuth from '../hooks/useAuth';
 import { COMPANY_ROUTES, CONSUMER_ROUTES } from '../constants/routes.constants';
@@ -22,7 +22,8 @@ interface PublicRouteProps {
  * @returns {JSX.Element} Protected route component or appropriate dashboard redirect
  */
 const PublicRoute: React.FC<PublicRouteProps> = ({ children, path }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, user, status } = useAuth();
+  const isLoading = status === 'loading';
 
   // Monitor and log route access attempts
   useEffect(() => {
@@ -89,9 +90,11 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children, path }) => {
   }, []);
 
   // Implement rate limiting
-  const isRateLimited = useEffect(() => {
+  const [isRateLimited, setIsRateLimited] = React.useState(false);
+
+  useEffect(() => {
     const accessCount = securityMetrics.getRouteAccessCount(path);
-    return accessCount > 100; // 100 requests per minute limit
+    setIsRateLimited(accessCount > 100); // 100 requests per minute limit
   }, [path]);
 
   if (isRateLimited) {

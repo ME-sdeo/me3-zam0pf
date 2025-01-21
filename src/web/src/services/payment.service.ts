@@ -50,6 +50,50 @@ export class PaymentService {
   }
 
   /**
+   * Fetches payment history for a user with pagination support
+   * @param userId User ID to fetch payment history for
+   * @param page Page number for pagination
+   * @param limit Number of records per page
+   * @returns Promise resolving to paginated payment transactions
+   */
+  public async fetchPaymentHistory(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    transactions: IPaymentTransaction[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    try {
+      // Log HIPAA-compliant audit trail for history access
+      await this.complianceLogger.logHistoryAccess({
+        userId,
+        page,
+        limit,
+        timestamp: new Date()
+      });
+
+      // Implementation would fetch from database/storage
+      // Placeholder implementation
+      return {
+        transactions: [],
+        total: 0,
+        page,
+        limit
+      };
+    } catch (error) {
+      await this.complianceLogger.logError({
+        operation: 'fetchPaymentHistory',
+        userId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Initializes a new HIPAA-compliant payment with blockchain verification
    * @param amount Payment amount details
    * @param paymentMethod Payment method information

@@ -47,12 +47,12 @@ const registerSchema = yup.object().shape({
     .required('Phone number is required for MFA')
     .matches(/^\+[1-9]\d{1,14}$/, 'Please enter a valid international phone number'),
   companyName: yup.string().when('role', {
-    is: UserRole.COMPANY,
-    then: yup.string().required('Company name is required'),
+    is: (val: string) => val === UserRole.COMPANY,
+    then: () => yup.string().required('Company name is required'),
   }),
   companyId: yup.string().when('role', {
-    is: UserRole.COMPANY,
-    then: yup.string().required('Company ID is required'),
+    is: (val: string) => val === UserRole.COMPANY,
+    then: () => yup.string().required('Company ID is required'),
   }),
   acceptTerms: yup
     .boolean()
@@ -85,7 +85,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
     formState: { errors },
     setError: setFieldError,
   } = useForm<RegisterFormData>({
-    resolver: yup.resolver(registerSchema),
+    resolver: yupResolver(registerSchema),
     mode: 'onBlur',
   });
 
@@ -114,25 +114,27 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onError }
         return;
       }
 
-      // Initialize auth service
-      const authService = new AuthService();
+      // Initialize auth service with MSAL client
+      const msalClient = new PublicClientApplication({
+        auth: {
+          clientId: process.env.REACT_APP_AZURE_CLIENT_ID || '',
+          authority: process.env.REACT_APP_AZURE_AUTHORITY || '',
+        }
+      });
+      const authService = new AuthService(msalClient);
 
       // Register user
-      const registrationData: Partial<IAuthUser> = {
+      await authService.register({
         email: data.email,
-        role: data.role,
-        mfaEnabled: true,
-      };
-
-      const result = await authService.register({
-        ...registrationData,
         password: data.password,
+        role: data.role,
         firstName: data.firstName,
         lastName: data.lastName,
         phoneNumber: data.phoneNumber,
         companyName: data.companyName,
         companyId: data.companyId,
         preferredMFAMethod: data.preferredMFAMethod,
+        mfaEnabled: true,
       });
 
       // Setup MFA

@@ -7,7 +7,8 @@ import {
   YAxis, 
   Tooltip, 
   Legend,
-  CartesianGrid 
+  CartesianGrid,
+  TooltipProps
 } from 'recharts';
 import { format } from 'date-fns';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -125,13 +126,14 @@ const ActivityChart: React.FC<ActivityChartProps> = React.memo(({
   }, [refreshInterval]);
 
   // Custom tooltip formatter
-  const formatTooltip = useCallback(({ active, payload, label }) => {
+  const formatTooltip = useCallback((props: TooltipProps<number, string>) => {
+    const { active, payload, label } = props;
     if (!active || !payload || !payload.length) return null;
 
     return (
       <div className="activity-chart__tooltip" role="tooltip" aria-label={ACCESSIBILITY_LABELS.tooltip}>
         <p className="activity-chart__tooltip-label">{label}</p>
-        {payload.map((entry: any) => (
+        {payload.map((entry) => (
           <p key={entry.name} className="activity-chart__tooltip-value">
             {entry.name}: {entry.value}
           </p>

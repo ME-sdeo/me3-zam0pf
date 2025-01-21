@@ -103,6 +103,39 @@ export const validateEmail = (email: string, strict = false): IValidationResult 
 };
 
 /**
+ * Enhanced password validation with Material UI error feedback
+ * @param password - Password to validate
+ * @returns Validation result with Material UI compatible error message
+ */
+export const validatePassword = (password: string): IValidationResult => {
+  if (!password) {
+    return {
+      isValid: false,
+      error: FORM_VALIDATION_MESSAGES.REQUIRED_FIELD,
+      helperText: 'Password is required'
+    };
+  }
+
+  if (password.length < USER_VALIDATION.PASSWORD_MIN_LENGTH) {
+    return {
+      isValid: false,
+      error: FORM_VALIDATION_MESSAGES.INVALID_PASSWORD,
+      helperText: `Password must be at least ${USER_VALIDATION.PASSWORD_MIN_LENGTH} characters long`
+    };
+  }
+
+  if (!USER_VALIDATION.PASSWORD_PATTERN.test(password)) {
+    return {
+      isValid: false,
+      error: FORM_VALIDATION_MESSAGES.INVALID_PASSWORD,
+      helperText: 'Password must contain uppercase, lowercase, number, and special character'
+    };
+  }
+
+  return { isValid: true };
+};
+
+/**
  * Enhanced FHIR resource validation with performance monitoring
  * @param resource - FHIR resource to validate
  * @param options - Validation options

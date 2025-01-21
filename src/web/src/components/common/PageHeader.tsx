@@ -30,9 +30,9 @@ interface PageHeaderProps {
 // Helper function to generate header classes
 const getHeaderClasses = (className?: string, medicalEnvironment?: boolean): string => {
   return classNames(
-    styles.pageHeader,
+    styles['page-header'],
     {
-      [styles.pageHeaderMedical]: medicalEnvironment,
+      [styles['page-header--medical']]: medicalEnvironment,
     },
     className
   );
@@ -58,13 +58,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     >
       {/* Back button with consent preservation */}
       {backButton?.show && (
-        <div className={styles.pageHeaderBack}>
+        <div className={styles['page-header__back']}>
           <Button
             variant="outline"
             onClick={backButton.onClick}
             ariaLabel="Go back"
             medicalEnvironment={medicalEnvironment}
-            consentRequired={backButton.preserveConsent}
+            requiresConsent={backButton.preserveConsent}
           >
             <span aria-hidden="true">←</span>
             <span className="visually-hidden">Back</span>
@@ -73,9 +73,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       )}
 
       {/* Header content with enhanced contrast for medical environments */}
-      <div className={styles.pageHeaderContent}>
+      <div className={styles['page-header__content']}>
         <h1 
-          className={styles.pageHeaderTitle}
+          className={styles['page-header__title']}
           style={{
             // Enhanced contrast for medical environments
             fontWeight: medicalEnvironment ? 500 : 400,
@@ -87,7 +87,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         {subtitle && (
           <p 
-            className={styles.pageHeaderSubtitle}
+            className={styles['page-header__subtitle']}
             style={{
               // Enhanced visibility for medical environments
               opacity: medicalEnvironment ? 0.95 : 0.87,
@@ -100,11 +100,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
       {/* Action button with consent and blockchain states */}
       {actionButton && (
-        <div className={styles.pageHeaderAction}>
+        <div className={styles['page-header__action']}>
           <Button
             variant={actionButton.variant || 'primary'}
             onClick={actionButton.onClick}
-            consentRequired={actionButton.consentRequired}
+            requiresConsent={actionButton.consentRequired}
             medicalEnvironment={medicalEnvironment}
             transactionPending={actionButton.blockchainState === 'pending'}
             ariaLabel={actionButton.label}
@@ -115,7 +115,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {/* Blockchain state indicator */}
           {actionButton.blockchainState && (
             <div 
-              className={styles.pageHeaderBlockchain}
+              className={styles['page-header__blockchain']}
               aria-live="polite"
               role="status"
             >

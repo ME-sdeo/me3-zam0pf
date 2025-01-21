@@ -9,11 +9,9 @@ import {
   IAuthUser 
 } from '../interfaces/auth.interface';
 import { 
-  AuthError, 
-  AuthStatus, 
+  AuthError,
   MFAMethod, 
-  MFAChallengeResponse, 
-  MFAVerificationPayload 
+  MFAChallengeResponse
 } from '../types/auth.types';
 import { apiConfig } from '../config/api.config';
 
@@ -71,7 +69,7 @@ export const login = async (credentials: ILoginCredentials): Promise<IAuthTokens
     
     if (response.data.mfaRequired) {
       await logSecurityEvent('MFA_REQUIRED', { email: credentials.email });
-      throw new Error(AuthError.MFA_REQUIRED);
+      throw new Error('MFA_REQUIRED');
     }
 
     const { tokens } = response.data;
@@ -81,10 +79,10 @@ export const login = async (credentials: ILoginCredentials): Promise<IAuthTokens
 
     await logSecurityEvent('LOGIN_SUCCESS', { email: credentials.email });
     return tokens;
-  } catch (error) {
+  } catch (error: any) {
     await logSecurityEvent('LOGIN_FAILED', { 
       email: credentials.email, 
-      error: error.message 
+      error: error?.message || 'Unknown error'
     });
     throw error;
   }
@@ -110,8 +108,8 @@ export const refreshToken = async (refreshToken: string): Promise<IAuthTokens> =
 
     await logSecurityEvent('TOKEN_REFRESH', { success: true });
     return tokens;
-  } catch (error) {
-    await logSecurityEvent('TOKEN_REFRESH_FAILED', { error: error.message });
+  } catch (error: any) {
+    await logSecurityEvent('TOKEN_REFRESH_FAILED', { error: error?.message || 'Unknown error' });
     throw error;
   }
 };
@@ -134,10 +132,10 @@ export const setupMFA = async (mfaConfig: IMFAConfig): Promise<{ secret: string;
     });
 
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     await logSecurityEvent('MFA_SETUP_FAILED', {
       method: mfaConfig.method,
-      error: error.message
+      error: error?.message || 'Unknown error'
     });
     throw error;
   }
@@ -163,10 +161,10 @@ export const verifyMFA = async (code: string, method: MFAMethod): Promise<boolea
     }
 
     throw new Error(AuthError.MFA_FAILED);
-  } catch (error) {
+  } catch (error: any) {
     await logSecurityEvent('MFA_VERIFICATION_FAILED', {
       method,
-      error: error.message
+      error: error?.message || 'Unknown error'
     });
     throw error;
   }
@@ -185,8 +183,8 @@ export const logout = async (): Promise<void> => {
     sessionStorage.clear();
     
     await logSecurityEvent('LOGOUT_SUCCESS', {});
-  } catch (error) {
-    await logSecurityEvent('LOGOUT_FAILED', { error: error.message });
+  } catch (error: any) {
+    await logSecurityEvent('LOGOUT_FAILED', { error: error?.message || 'Unknown error' });
     throw error;
   }
 };

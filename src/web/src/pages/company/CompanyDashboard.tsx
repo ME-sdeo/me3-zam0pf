@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useCallback } from 'react';
-import { ErrorBoundary } from 'react-error-boundary'; // ^4.0.0
-import useWebSocket from '@use-web-socket/react'; // ^3.0.0
-import { BlockchainVerification } from '@myelixir/blockchain-verification'; // ^1.0.0
-import { useSecureMarketplace } from '@myelixir/marketplace-hooks'; // ^1.0.0
-import { Grid, Typography, Box, CircularProgress } from '@mui/material'; // ^5.0.0
+import { ErrorBoundary } from 'react-error-boundary';
+import useWebSocket from '@use-web-socket/react';
+import { BlockchainVerification } from '@myelixir/blockchain-verification';
+import { Grid, Typography, Box, CircularProgress } from '@mui/material';
 
 import ActivityChart from '../../components/dashboard/ActivityChart';
 import Card from '../../components/common/Card';
@@ -16,11 +15,6 @@ import { API_ENDPOINTS } from '../../constants/api.constants';
 const WEBSOCKET_REFRESH_INTERVAL = 5000;
 const METRICS_GRID_LAYOUT = { xs: 12, sm: 6, md: 3 };
 const CHART_GRID_LAYOUT = { xs: 12, md: 6 };
-const HIPAA_AUDIT_CONFIG = {
-  enabled: true,
-  logLevel: 'detailed',
-  retention: '7years'
-} as const;
 
 // Interface for secure metrics
 interface ISecureMetrics {
@@ -51,7 +45,7 @@ const CompanyDashboard: React.FC = React.memo(() => {
   } = useMarketplace();
 
   // WebSocket connection for real-time updates
-  const { lastMessage, readyState } = useWebSocket(
+  const { lastMessage } = useWebSocket(
     API_ENDPOINTS.MARKETPLACE.NOTIFICATIONS,
     {
       reconnectInterval: WEBSOCKET_REFRESH_INTERVAL,
@@ -69,8 +63,8 @@ const CompanyDashboard: React.FC = React.memo(() => {
         weeklyTrend: 0,
         totalSpent: 0,
         blockchainStatus: {
-          verified: false,
-          lastSync: new Date()
+          verified: blockchainStatus?.connected || false,
+          lastSync: blockchainStatus?.lastSync || new Date()
         },
         lastUpdated: new Date()
       };
@@ -92,7 +86,10 @@ const CompanyDashboard: React.FC = React.memo(() => {
       matchRate,
       weeklyTrend,
       totalSpent,
-      blockchainStatus,
+      blockchainStatus: {
+        verified: blockchainStatus?.connected || false,
+        lastSync: blockchainStatus?.lastSync || new Date()
+      },
       lastUpdated: new Date()
     };
   }, [requests, matches, blockchainStatus]);
@@ -220,8 +217,7 @@ const calculateWeeklyTrend = (requests: IDataRequest[]): number => {
 
 const calculateTotalSpent = (matches: IDataMatch[]): number => {
   return matches.reduce((total, match) => {
-    const request = match.requestId;
-    return total + (request ? request.pricePerRecord : 0);
+    return total + (match.pricePerRecord || 0);
   }, 0);
 };
 

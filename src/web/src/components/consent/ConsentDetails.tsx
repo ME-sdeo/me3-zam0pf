@@ -53,11 +53,11 @@ const ConsentDetails: React.FC<IConsentDetailsProps> = React.memo(({
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { checkValidity, verifyBlockchain, logAuditEvent } = useConsent();
+  const { checkValidity, verifyBlockchain } = useConsent();
 
   // State for revocation dialog
   const [revokeDialogOpen, setRevokeDialogOpen] = React.useState(false);
-  const [blockchainVerified, setBlockchainVerified] = React.useState(false);
+  const [blockchainVerified, setBlockchainVerified] = React.useState<boolean>(false);
   const [verificationError, setVerificationError] = React.useState<string | null>(null);
 
   /**
@@ -67,10 +67,10 @@ const ConsentDetails: React.FC<IConsentDetailsProps> = React.memo(({
     const verifyConsentBlockchain = async () => {
       try {
         const isValid = await verifyBlockchain(consent);
-        setBlockchainVerified(isValid);
+        setBlockchainVerified(Boolean(isValid));
         
         // Log verification result
-        logAuditEvent({
+        onAuditLog({
           type: 'BLOCKCHAIN_VERIFICATION',
           message: isValid ? 'Blockchain verification successful' : 'Blockchain verification failed',
           metadata: { consentId: consent.id }
@@ -82,7 +82,7 @@ const ConsentDetails: React.FC<IConsentDetailsProps> = React.memo(({
     };
 
     verifyConsentBlockchain();
-  }, [consent, verifyBlockchain, logAuditEvent]);
+  }, [consent, verifyBlockchain, onAuditLog]);
 
   /**
    * Format date for display with security context
@@ -188,10 +188,10 @@ const ConsentDetails: React.FC<IConsentDetailsProps> = React.memo(({
           </Box>
         )}
 
-        {/* Encryption Status */}
+        {/* Encryption Level */}
         <Box my={2} className="consent-details__encryption">
           <Typography variant="subtitle2">
-            {t('consent.encryption.status')}: {consent.encryptionStatus}
+            {t('consent.encryption.level')}: {consent.permissions.encryptionLevel}
           </Typography>
         </Box>
 
@@ -238,9 +238,9 @@ const ConsentDetails: React.FC<IConsentDetailsProps> = React.memo(({
 // Add display name for debugging
 ConsentDetails.displayName = 'ConsentDetails';
 
-// Wrap with error boundary
+// Wrap with error boundary and ensure translation context
 const ConsentDetailsWithErrorBoundary = withErrorBoundary(ConsentDetails, {
-  fallback: <Alert severity="error">{t('errors.consent_display_failed')}</Alert>,
+  fallback: ({ error }) => <Alert severity="error">{error?.message || 'Error displaying consent details'}</Alert>,
   onError: (error) => {
     console.error('ConsentDetails Error:', error);
   }

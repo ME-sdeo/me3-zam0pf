@@ -1,10 +1,8 @@
-import { MedplumClient } from '@medplum/core'; // @medplum/core ^2.0.0
+import { MedplumClient } from '@medplum/core';
 import {
   FHIR_VERSION,
   FHIR_RESOURCE_TYPES,
-  FHIR_VALIDATION_RULES,
-  isFhirResource,
-  isFhirResourceType
+  FHIR_VALIDATION_RULES
 } from '../constants/fhir.constants';
 
 /**
@@ -42,99 +40,81 @@ const CUSTOM_VALIDATORS = {
 };
 
 /**
- * Configuration decorator to validate FHIR config on load
- */
-function validateConfig(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value;
-  descriptor.value = function(...args: any[]) {
-    const config = originalMethod.apply(this, args);
-    if (!config.client?.baseUrl || !config.client?.clientId) {
-      throw new Error('Invalid FHIR configuration: Missing required client settings');
-    }
-    return config;
-  };
-  return descriptor;
-}
-
-/**
- * Configuration decorator to audit config loading
- */
-function auditConfigLoad(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value;
-  descriptor.value = function(...args: any[]) {
-    const config = originalMethod.apply(this, args);
-    if (config.audit?.enabled) {
-      console.info('FHIR configuration loaded successfully', {
-        version: config.client.version,
-        baseUrl: config.client.baseUrl,
-        validationEnabled: config.validation.enabled,
-        timestamp: new Date().toISOString()
-      });
-    }
-    return config;
-  };
-  return descriptor;
-}
-
-/**
  * Comprehensive FHIR configuration for frontend integration
  * Implements strict validation and enhanced error handling
  */
-@validateConfig
-@auditConfigLoad
-export const loadFHIRConfig = () => ({
-  client: {
-    baseUrl: process.env.VITE_MEDPLUM_SERVER_URL,
-    clientId: process.env.VITE_MEDPLUM_CLIENT_ID,
-    version: FHIR_VERSION,
-    timeout: 30000,
-    retryAttempts: 3,
-    retryDelay: 1000,
-    headers: {
-      'X-Request-ID': generateRequestId(),
-      'X-Client-Version': process.env.VITE_APP_VERSION
-    }
-  },
+export const loadFHIRConfig = () => {
+  const config = {
+    client: {
+      baseUrl: process.env.VITE_MEDPLUM_SERVER_URL,
+      clientId: process.env.VITE_MEDPLUM_CLIENT_ID,
+      version: FHIR_VERSION,
+      timeout: 30000,
+      retryAttempts: 3,
+      retryDelay: 1000,
+      headers: {
+        'X-Request-ID': generateRequestId(),
+        'X-Client-Version': process.env.VITE_APP_VERSION || ''
+      }
+    },
 
-  validation: {
-    enabled: true,
-    rules: FHIR_VALIDATION_RULES,
-    strictMode: true,
-    validateOnUpload: true,
-    errorAggregation: true,
-    customValidators: CUSTOM_VALIDATORS,
-    validationCache: {
+    validation: {
       enabled: true,
-      ttl: 3600 // 1 hour
-    }
-  },
+      rules: FHIR_VALIDATION_RULES,
+      strictMode: true,
+      validateOnUpload: true,
+      errorAggregation: true,
+      customValidators: CUSTOM_VALIDATORS,
+      validationCache: {
+        enabled: true,
+        ttl: 3600 // 1 hour
+      }
+    },
 
-  resourceTypes: FHIR_RESOURCE_TYPES,
+    resourceTypes: FHIR_RESOURCE_TYPES,
 
-  mimeTypes: {
-    json: 'application/fhir+json',
-    xml: 'application/fhir+xml'
-  },
+    mimeTypes: {
+      json: 'application/fhir+json',
+      xml: 'application/fhir+xml'
+    },
 
-  errorHandling: {
-    retryableErrors: ['TIMEOUT', 'NETWORK_ERROR'],
-    maxRetries: 3,
-    errorLogging: true,
-    errorReporting: {
+    errorHandling: {
+      retryableErrors: ['TIMEOUT', 'NETWORK_ERROR'],
+      maxRetries: 3,
+      errorLogging: true,
+      errorReporting: {
+        enabled: true,
+        sanitizeErrors: true,
+        includeStackTrace: false
+      }
+    },
+
+    audit: {
       enabled: true,
-      sanitizeErrors: true,
-      includeStackTrace: false
+      logLevel: 'INFO',
+      includeHeaders: false,
+      maskSensitiveData: true,
+      retentionDays: 90
     }
-  },
+  };
 
-  audit: {
-    enabled: true,
-    logLevel: 'INFO',
-    includeHeaders: false,
-    maskSensitiveData: true,
-    retentionDays: 90
+  // Validate config
+  if (!config.client?.baseUrl || !config.client?.clientId) {
+    throw new Error('Invalid FHIR configuration: Missing required client settings');
   }
-});
+
+  // Audit config load
+  if (config.audit?.enabled) {
+    console.info('FHIR configuration loaded successfully', {
+      version: config.client.version,
+      baseUrl: config.client.baseUrl,
+      validationEnabled: config.validation.enabled,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  return config;
+};
 
 /**
  * Initialize Medplum client with enhanced configuration
@@ -146,10 +126,10 @@ export const initializeMedplumClient = (): MedplumClient => {
     baseUrl: config.client.baseUrl,
     clientId: config.client.clientId,
     fetch: (url: string, options: RequestInit) => {
-      const headers = {
-        ...options.headers,
-        ...config.client.headers
-      };
+      const headers = new Headers(options.headers);
+      Object.entries(config.client.headers).forEach(([key, value]) => {
+        headers.set(key, value);
+      });
       return fetch(url, { ...options, headers });
     }
   });

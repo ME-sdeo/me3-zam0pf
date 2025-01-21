@@ -7,7 +7,6 @@ import {
   MenuList,
   MenuItem,
   Grow,
-  Theme,
   useTheme
 } from '@material-ui/core'; // v5.0.0
 
@@ -197,7 +196,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         transition
         style={{ zIndex: theme.zIndex.modal }}
       >
-        {({ TransitionProps }) => (
+        {({ TransitionProps }: { TransitionProps: any }) => (
           <Grow {...TransitionProps}>
             <Paper elevation={8}>
               <ClickAwayListener onClickAway={() => setIsOpen(false)}>

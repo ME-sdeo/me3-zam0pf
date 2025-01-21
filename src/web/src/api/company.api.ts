@@ -5,7 +5,7 @@
  */
 
 import { AxiosResponse } from 'axios'; // axios ^1.3.0
-import { retry } from 'axios-retry'; // axios-retry ^3.4.0
+import axiosRetry from 'axios-retry'; // axios-retry ^3.4.0
 import { validate } from 'class-validator'; // class-validator ^0.14.0
 
 import apiService from '../services/api.service';
@@ -29,7 +29,7 @@ const COMPANY_ERRORS = {
  */
 export const registerCompany = async (
   companyData: Partial<ICompany>
-): Promise<AxiosResponse<ICompany>> => {
+): Promise<ICompany> => {
   try {
     // Validate required fields
     const validationErrors = await validate(companyData);
@@ -59,7 +59,7 @@ export const registerCompany = async (
       }
     );
 
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Company registration error:', error);
     throw new Error(COMPANY_ERRORS.REGISTRATION_FAILED);
@@ -74,7 +74,7 @@ export const registerCompany = async (
 export const updateCompanyProfile = async (
   companyId: string,
   profileData: Partial<ICompanyProfile>
-): Promise<AxiosResponse<ICompany>> => {
+): Promise<ICompany> => {
   try {
     // Validate profile data
     const validationErrors = await validate(profileData);
@@ -98,7 +98,7 @@ export const updateCompanyProfile = async (
       }
     );
 
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Company profile update error:', error);
     throw new Error(COMPANY_ERRORS.UPDATE_FAILED);
@@ -111,7 +111,7 @@ export const updateCompanyProfile = async (
  */
 export const getCompanyDetails = async (
   companyId: string
-): Promise<AxiosResponse<ICompany>> => {
+): Promise<ICompany> => {
   try {
     const response = await apiService.get<ICompany>(
       `/companies/${companyId}`,
@@ -124,7 +124,7 @@ export const getCompanyDetails = async (
       }
     );
 
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Company details retrieval error:', error);
     throw new Error(COMPANY_ERRORS.NOT_FOUND);
@@ -143,7 +143,7 @@ export const verifyCompany = async (
     certifications: string[];
     additionalInfo?: Record<string, unknown>;
   }
-): Promise<AxiosResponse<ICompany>> => {
+): Promise<ICompany> => {
   try {
     const formData = new FormData();
     verificationData.documents.forEach((doc, index) => {
@@ -167,7 +167,7 @@ export const verifyCompany = async (
       }
     );
 
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Company verification error:', error);
     throw new Error(COMPANY_ERRORS.VERIFICATION_FAILED);
@@ -182,7 +182,7 @@ export const verifyCompany = async (
 export const updateCompanyStatus = async (
   companyId: string,
   status: CompanyStatus
-): Promise<AxiosResponse<ICompany>> => {
+): Promise<ICompany> => {
   try {
     const response = await apiService.put<ICompany>(
       `/companies/${companyId}/status`,
@@ -196,7 +196,7 @@ export const updateCompanyStatus = async (
       }
     );
 
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Company status update error:', error);
     throw new Error(COMPANY_ERRORS.UPDATE_FAILED);

@@ -7,11 +7,7 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts'; // recharts ^2.7.0
-import { 
-  usePayment, 
-  getPaymentHistory, 
-  verifyBlockchainTransaction 
-} from '../../hooks/usePayment';
+import { usePayment } from '../../hooks/usePayment';
 import { IPaymentTransaction } from '../../interfaces/payment.interface';
 
 /**
@@ -29,6 +25,7 @@ interface CompensationChartProps {
     auditLevel: string;
     retentionPeriod: string;
   };
+  userId: string; // Added required userId prop
 }
 
 /**
@@ -58,12 +55,12 @@ const transformPaymentData = async (
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
   );
 
-  // Group transactions by date and verify blockchain records
+  // Group transactions by date
   const groupedData = new Map<string, ChartDataPoint>();
 
   for (const transaction of sortedTransactions) {
     const dateKey = transaction.createdAt.toISOString().split('T')[0];
-    const isVerified = await verifyBlockchainTransaction(transaction.blockchainRef);
+    const isVerified = transaction.status === 'COMPLETED';
 
     const existingPoint = groupedData.get(dateKey);
     const amount = transaction.amount.currency === targetCurrency
@@ -115,7 +112,8 @@ const CompensationChart: React.FC<CompensationChartProps> = ({
     hipaaCompliant: true,
     auditLevel: 'FULL',
     retentionPeriod: '7_YEARS'
-  }
+  },
+  userId
 }) => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,7 +125,7 @@ const CompensationChart: React.FC<CompensationChartProps> = ({
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const transactions = await getPaymentHistory();
+        const transactions = await getPaymentHistory(userId);
         
         // Filter transactions by date range
         const filteredTransactions = transactions.filter(
@@ -148,7 +146,7 @@ const CompensationChart: React.FC<CompensationChartProps> = ({
     };
 
     fetchData();
-  }, [startDate, endDate, currency, getPaymentHistory]);
+  }, [startDate, endDate, currency, getPaymentHistory, userId]);
 
   const renderTooltip = (props: any) => {
     if (!props.active || !props.payload?.length) {

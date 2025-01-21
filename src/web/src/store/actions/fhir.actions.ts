@@ -1,5 +1,4 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'; // @reduxjs/toolkit ^1.9.0
-import { Resource } from '@medplum/fhirtypes'; // @medplum/fhirtypes ^2.0.0
 import { 
   IFHIRResource, 
   IFHIRSearchParams,
@@ -7,8 +6,7 @@ import {
 } from '../../interfaces/fhir.interface';
 import { 
   uploadFHIRResource,
-  searchFHIRResources,
-  getFHIRResource 
+  searchFHIRResources
 } from '../../api/fhir.api';
 import { validateFHIRResource } from '../../utils/fhir.util';
 
@@ -71,65 +69,6 @@ export const searchFHIRResourcesThunk = createAsyncThunk(
       return rejectWithValue({
         error: error instanceof Error ? error.message : 'Search failed',
         searchParams
-      });
-    }
-  }
-);
-
-/**
- * Enhanced async thunk for retrieving specific FHIR resources
- * Implements caching and request deduplication
- */
-export const getFHIRResourceThunk = createAsyncThunk(
-  `${FHIR_ACTION_PREFIX}/getResource`,
-  async (
-    params: { resourceType: string; id: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      // Retrieve resource with caching
-      const resource = await getFHIRResource(params.resourceType, params.id);
-
-      return {
-        resource,
-        params,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      return rejectWithValue({
-        error: error instanceof Error ? error.message : 'Retrieval failed',
-        params
-      });
-    }
-  }
-);
-
-/**
- * Enhanced async thunk for validating FHIR resources with metrics
- * Implements comprehensive validation with performance tracking
- */
-export const validateFHIRResourceThunk = createAsyncThunk(
-  `${FHIR_ACTION_PREFIX}/validateResource`,
-  async (resource: IFHIRResource, { rejectWithValue }) => {
-    try {
-      const startTime = Date.now();
-      
-      // Perform comprehensive validation
-      const validationResult = await validateFHIRResource(resource, {
-        validateProfile: true,
-        strictMode: true
-      });
-
-      return {
-        resource,
-        validationResult,
-        timestamp: new Date().toISOString(),
-        processingTime: Date.now() - startTime
-      };
-    } catch (error) {
-      return rejectWithValue({
-        error: error instanceof Error ? error.message : 'Validation failed',
-        resource
       });
     }
   }

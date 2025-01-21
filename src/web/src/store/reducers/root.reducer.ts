@@ -1,12 +1,12 @@
 import { combineReducers } from '@reduxjs/toolkit'; // ^1.9.0
 
 // Import feature reducers
-import { reducer as authReducer } from './auth.reducer';
-import { reducer as consentReducer } from './consent.reducer';
-import { reducer as marketplaceReducer } from './marketplace.reducer';
-import { reducer as fhirReducer } from './fhir.reducer';
-import { reducer as paymentReducer } from './payment.reducer';
-import { reducer as notificationReducer } from './notification.reducer';
+import authReducer from './auth.reducer';
+import consentReducer from './consent.reducer';
+import marketplaceReducer from './marketplace.reducer';
+import fhirReducer from './fhir.reducer';
+import paymentReducer from './payment.reducer';
+import notificationReducer from './notification.reducer';
 
 // Import state interfaces
 import { IAuthState } from '../../interfaces/auth.interface';

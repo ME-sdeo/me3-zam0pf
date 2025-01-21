@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Box, Typography, CircularProgress, Alert, AlertTitle } from '@mui/material';
-import { Resource } from '@medplum/fhirtypes'; // ^2.0.0
-import { AuditLogger } from '@medplum/core'; // ^2.0.0
+import { Resource } from '@medplum/fhirtypes';
 
 import { FileUpload } from '../common/FileUpload';
-import { IFHIRResource, IFHIRValidationResult, IFHIRValidationError, ValidationSeverity } from '../../interfaces/fhir.interface';
+import { IFHIRResource, IFHIRValidationError, ValidationSeverity } from '../../interfaces/fhir.interface';
 import { FHIRService } from '../../services/fhir.service';
 import { FHIR_VALIDATION } from '../../constants/validation.constants';
+import apiService from '../../services/api.service';
 
 /**
  * Props interface for the FHIRUploader component
@@ -52,8 +52,7 @@ export const FHIRUploader: React.FC<FHIRUploaderProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [validationErrors, setValidationErrors] = useState<IFHIRValidationError[]>([]);
   
-  const fhirService = useRef(new FHIRService());
-  const auditLogger = useRef(new AuditLogger());
+  const fhirService = useRef(new FHIRService(apiService));
 
   /**
    * Handles file selection with comprehensive validation and security checks
@@ -161,7 +160,7 @@ export const FHIRUploader: React.FC<FHIRUploaderProps> = ({
    */
   const handleError = useCallback((error: any) => {
     setValidationErrors([{
-      type: 'Value',
+      type: FHIRValidationErrorType.Format,
       field: 'file',
       message: error.message,
       code: 'UPLOAD_ERROR',
@@ -179,7 +178,7 @@ export const FHIRUploader: React.FC<FHIRUploaderProps> = ({
         onError={handleError}
         onProgress={handleProgress}
         maxFileSize={maxFileSize}
-        allowedFileTypes={allowedMimeTypes}
+        allowedFileTypes={[...allowedMimeTypes]}
         multiple={false}
         disabled={disabled || isUploading}
         validateFHIR={true}

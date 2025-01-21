@@ -42,7 +42,6 @@ const initialState: MarketplaceState = {
 /**
  * Constants for marketplace business rules
  */
-const MATCH_SCORE_THRESHOLD = 0.75;
 const AUDIT_RETENTION_DAYS = 2555; // 7 years for HIPAA compliance
 const BLOCKCHAIN_RETRY_ATTEMPTS = 3;
 
@@ -52,12 +51,15 @@ const BLOCKCHAIN_RETRY_ATTEMPTS = 3;
 export const marketplaceReducer = createReducer(initialState, (builder) => {
   builder
     // Handle request creation
-    .addCase(MARKETPLACE_ACTION_TYPES.CREATE_REQUEST_PENDING, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
     .addCase(
-      MARKETPLACE_ACTION_TYPES.CREATE_REQUEST_SUCCESS,
+      'marketplace/createRequest/pending',
+      (state) => {
+        state.loading = true;
+        state.error = null;
+      }
+    )
+    .addCase(
+      'marketplace/createRequest/success',
       (state, action: PayloadAction<IDataRequest>) => {
         const request = action.payload;
         
@@ -77,7 +79,7 @@ export const marketplaceReducer = createReducer(initialState, (builder) => {
       }
     )
     .addCase(
-      MARKETPLACE_ACTION_TYPES.CREATE_REQUEST_ERROR,
+      'marketplace/createRequest/error',
       (state, action: PayloadAction<string>) => {
         state.loading = false;
         state.error = action.payload;
@@ -86,7 +88,7 @@ export const marketplaceReducer = createReducer(initialState, (builder) => {
     
     // Handle blockchain transaction updates
     .addCase(
-      MARKETPLACE_ACTION_TYPES.PROCESS_TRANSACTION_PENDING,
+      'marketplace/processTransaction/pending',
       (state, action: PayloadAction<{ requestId: UUID }>) => {
         const { requestId } = action.payload;
         state.blockchainStatus[requestId] = {
@@ -98,7 +100,7 @@ export const marketplaceReducer = createReducer(initialState, (builder) => {
       }
     )
     .addCase(
-      MARKETPLACE_ACTION_TYPES.PROCESS_TRANSACTION_SUCCESS,
+      'marketplace/processTransaction/success',
       (state, action: PayloadAction<{
         requestId: UUID;
         transactionHash: string;
@@ -126,7 +128,7 @@ export const marketplaceReducer = createReducer(initialState, (builder) => {
       }
     )
     .addCase(
-      MARKETPLACE_ACTION_TYPES.PROCESS_TRANSACTION_ERROR,
+      'marketplace/processTransaction/error',
       (state, action: PayloadAction<{
         requestId: UUID;
         error: string;
@@ -166,7 +168,7 @@ export const marketplaceReducer = createReducer(initialState, (builder) => {
 
     // Handle audit log updates
     .addCase(
-      MARKETPLACE_ACTION_TYPES.AUDIT_LOG_SUCCESS,
+      'marketplace/auditLog/success',
       (state, action: PayloadAction<{
         requestId: UUID;
         entry: {

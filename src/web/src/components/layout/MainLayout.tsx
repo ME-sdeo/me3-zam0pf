@@ -58,9 +58,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           backgroundColor: theme.palette.background.paper,
           zIndex: theme.zIndex.modal + 1,
           transition: 'top 0.2s ease',
-          '&:focus': {
-            top: 0,
-          },
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.top = '0';
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.top = '-40px';
         }}
       >
         Skip to main content
@@ -68,16 +71,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Header with menu toggle */}
       <Header 
-        onMenuClick={handleSidebarToggle}
-        role="banner"
+        onThemeChange={undefined}
+        onSecurityAlert={undefined}
       />
 
       {/* Navigation sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={handleSidebarToggle}
-        role="navigation"
-        aria-label="Main navigation"
+        className="main-sidebar"
       />
 
       {/* Main content area */}
@@ -113,37 +115,36 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </Box>
 
       {/* Footer */}
-      <Footer role="contentinfo" />
+      <Footer />
 
-      <style jsx>{`
-        /* Skip link styles */
-        .skip-link {
-          color: ${theme.palette.primary.main};
-          text-decoration: none;
-          font-weight: 500;
+      <style>
+        {`
+          .skip-link {
+            color: ${theme.palette.primary.main};
+            text-decoration: none;
+            font-weight: 500;
+          }
 
-          &:focus {
+          .skip-link:focus {
             outline: 2px solid ${theme.palette.primary.main};
             outline-offset: 2px;
           }
-        }
 
-        /* High contrast mode adjustments */
-        @media (prefers-contrast: high) {
-          .skip-link:focus {
-            outline: 4px solid currentColor;
+          @media (prefers-contrast: high) {
+            .skip-link:focus {
+              outline: 4px solid currentColor;
+            }
           }
-        }
 
-        /* Reduced motion preferences */
-        @media (prefers-reduced-motion: reduce) {
-          * {
-            transition-duration: 0.01ms !important;
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
+          @media (prefers-reduced-motion: reduce) {
+            * {
+              transition-duration: 0.01ms !important;
+              animation-duration: 0.01ms !important;
+              animation-iteration-count: 1 !important;
+            }
           }
-        }
-      `}</style>
+        `}
+      </style>
     </Box>
   );
 };

@@ -1,9 +1,7 @@
-import { format, isValid, parseISO, addDays, subDays, formatDistanceToNow } from 'date-fns'; // date-fns ^2.30.0
+import { format, isValid, parseISO, subDays, formatDistanceToNow } from 'date-fns'; // date-fns ^2.30.0
 
 // Global constants for date formatting and configuration
 const DEFAULT_DATE_FORMAT = 'yyyy-MM-dd';
-const DISPLAY_DATE_FORMAT = 'MMM dd, yyyy';
-const DATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
 const TIMEZONE = 'UTC';
 
 // Error messages for date validation
@@ -12,12 +10,6 @@ const DATE_ERRORS = {
   FUTURE_DATE: 'Future dates not allowed',
   RANGE_ERROR: 'Invalid date range'
 } as const;
-
-// Interface definitions
-interface DateFormatOptions {
-  addTime?: boolean;
-  useUTC?: boolean;
-}
 
 interface RelativeTimeOptions {
   addSuffix?: boolean;
@@ -54,8 +46,7 @@ export const formatDate = (
       return DATE_ERRORS.INVALID_DATE;
     }
 
-    const formatOptions = useUTC ? { timeZone: TIMEZONE } : undefined;
-    return format(parsedDate, formatString, formatOptions);
+    return format(parsedDate, formatString);
   } catch (error) {
     console.error('Date formatting error:', error);
     return DATE_ERRORS.INVALID_DATE;

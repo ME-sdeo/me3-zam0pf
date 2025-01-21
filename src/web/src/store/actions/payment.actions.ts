@@ -5,11 +5,8 @@ import {
   IPaymentMethod, 
   IPaymentAmount, 
   IPaymentTransaction,
-  PaymentMethodType,
-  PAYMENT_TIMEOUT_MS,
   MAX_RETRY_ATTEMPTS 
 } from '../../interfaces/payment.interface';
-import { TransactionStatus } from '../../types/marketplace.types';
 
 // Action type constants with comprehensive coverage of payment operations
 export const PAYMENT_ACTION_TYPES = {
@@ -49,10 +46,12 @@ export const initializePayment = (
     try {
       dispatch({ type: PAYMENT_ACTION_TYPES.INITIALIZE_PAYMENT_START });
       
-      const paymentIntent = await paymentService.initializePayment(
-        amount,
-        paymentMethod,
-        complianceMetadata
+      const paymentIntent = await withRetry(() => 
+        paymentService.initializePayment(
+          amount,
+          paymentMethod,
+          complianceMetadata
+        )
       );
       
       dispatch({
@@ -82,9 +81,11 @@ export const processPayment = (
     try {
       dispatch({ type: PAYMENT_ACTION_TYPES.PROCESS_PAYMENT_START });
       
-      const transaction = await paymentService.processPayment(
-        paymentIntentId,
-        blockchainData
+      const transaction = await withRetry(() =>
+        paymentService.processPayment(
+          paymentIntentId,
+          blockchainData
+        )
       );
       
       dispatch({
@@ -115,7 +116,9 @@ export const fetchPaymentHistory = (
     try {
       dispatch({ type: PAYMENT_ACTION_TYPES.FETCH_HISTORY_START });
       
-      const history = await paymentService.fetchPaymentHistory(userId, page, limit);
+      const history = await withRetry(() =>
+        paymentService.fetchPaymentHistory(userId, page, limit)
+      );
       
       dispatch({
         type: PAYMENT_ACTION_TYPES.FETCH_HISTORY_SUCCESS,
@@ -143,7 +146,9 @@ export const verifyBlockchainTransaction = (
     try {
       dispatch({ type: PAYMENT_ACTION_TYPES.VERIFY_BLOCKCHAIN_START });
       
-      const isValid = await paymentService.verifyBlockchainTransaction(blockchainRef);
+      const isValid = await withRetry(() =>
+        paymentService.verifyBlockchainTransaction(blockchainRef)
+      );
       
       dispatch({
         type: PAYMENT_ACTION_TYPES.VERIFY_BLOCKCHAIN_SUCCESS,

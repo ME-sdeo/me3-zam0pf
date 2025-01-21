@@ -7,14 +7,7 @@ import { useConsentVerification } from '@myelixir/consent'; // ^1.0.0
 import Button from '../components/common/Button';
 import PageHeader from '../components/common/PageHeader';
 
-import {
-  unauthorized,
-  'unauthorized__content': unauthorizedContent,
-  'unauthorized__message': unauthorizedMessage,
-  'unauthorized__actions': unauthorizedActions,
-  'unauthorized__high-contrast': unauthorizedHighContrast,
-  'unauthorized__reduced-motion': unauthorizedReducedMotion,
-} from '../styles/pages/_unauthorized.scss';
+import styles from '../styles/pages/_unauthorized.scss';
 
 const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
   <div role="alert" className="error-boundary">
@@ -64,9 +57,9 @@ const Unauthorized: React.FC = () => {
     >
       <main 
         className={`
-          ${unauthorized}
-          ${prefersHighContrast ? unauthorizedHighContrast : ''}
-          ${prefersReducedMotion ? unauthorizedReducedMotion : ''}
+          ${styles.unauthorized}
+          ${prefersHighContrast ? styles.unauthorizedHighContrast : ''}
+          ${prefersReducedMotion ? styles.unauthorizedReducedMotion : ''}
         `}
         role="main"
         aria-labelledby="unauthorized-title"
@@ -77,9 +70,9 @@ const Unauthorized: React.FC = () => {
           medicalEnvironment={isMedicalEnvironment}
         />
 
-        <div className={unauthorizedContent}>
+        <div className={styles.unauthorizedContent}>
           <div 
-            className={unauthorizedMessage}
+            className={styles.unauthorizedMessage}
             role="alert"
             aria-live="polite"
           >
@@ -93,7 +86,7 @@ const Unauthorized: React.FC = () => {
             </p>
           </div>
 
-          <div className={unauthorizedActions}>
+          <div className={styles.unauthorizedActions}>
             <Button
               variant="primary"
               onClick={handleBackToHome}

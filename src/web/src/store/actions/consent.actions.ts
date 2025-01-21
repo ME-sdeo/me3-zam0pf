@@ -5,7 +5,7 @@
  */
 
 import { createAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { IConsent, ConsentStatus, ValidationSeverity } from '../../interfaces/consent.interface';
+import { IConsent, ConsentStatus } from '../../interfaces/consent.interface';
 import ConsentService from '../../services/consent.service';
 
 // Action type prefix for consent operations
@@ -118,8 +118,9 @@ export const verifyBlockchainConsent = createAsyncThunk(
   async (consent: IConsent, { rejectWithValue, signal }) => {
     try {
       // Create abort controller for timeout
+      const abortController = new AbortController();
       const timeoutId = setTimeout(() => {
-        signal.abort();
+        abortController.abort();
       }, BLOCKCHAIN_VERIFICATION_TIMEOUT);
 
       // Verify blockchain record

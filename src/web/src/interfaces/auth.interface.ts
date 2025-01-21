@@ -12,6 +12,19 @@ export interface IAuthState {
     tokens: IAuthTokens | null;
     lastActivity: number;
     sessionExpiry: number;
+    error: string | null;
+    securityContext: {
+        deviceId: string;
+        ipAddress: string;
+        lastLocation: string | null;
+    } | null;
+    mfaState: {
+        required: boolean;
+        verified: boolean;
+        method: MFAMethod | null;
+        challengeId: string | null;
+        expiresAt: number | null;
+    } | null;
 }
 
 /**
@@ -62,4 +75,5 @@ export interface ILoginCredentials {
     email: string;
     password: string;
     rememberMe: boolean;
+    deviceFingerprint: string;
 }

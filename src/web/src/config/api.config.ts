@@ -1,5 +1,3 @@
-import axiosRetry from 'axios-retry';
-
 /**
  * Current API version
  * @constant {string}
@@ -48,6 +46,8 @@ export interface RetryConfig {
 export interface ApiConfig {
   /** Base URL for API endpoints */
   readonly baseURL: string;
+  /** WebSocket URL for real-time communication */
+  readonly wsURL: string;
   /** Request timeout in milliseconds */
   readonly timeout: number;
   /** Retry configuration */
@@ -106,6 +106,7 @@ const shouldRetryRequest = (error: any): boolean => {
  */
 export const apiConfig: ApiConfig = {
   baseURL: getBaseUrl(),
+  wsURL: getBaseUrl().replace('http', 'ws'),
   timeout: DEFAULT_TIMEOUT,
   retryConfig: {
     maxRetries: 3,

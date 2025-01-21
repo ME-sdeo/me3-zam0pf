@@ -1,10 +1,8 @@
 import { useSelector, useDispatch } from 'react-redux'; // react-redux ^8.0.5
 import { useCallback, useEffect, useRef } from 'react'; // react ^18.0.0
-import { PublicClientApplication, Configuration, AuthenticationResult } from '@azure/msal-browser'; // @azure/msal-browser ^2.32.0
-import { IAuthState, IAuthUser, IAuthTokens, ILoginCredentials, IMFAConfig } from '../interfaces/auth.interface';
+import { PublicClientApplication, Configuration } from '@azure/msal-browser'; // @azure/msal-browser ^2.32.0
+import { IAuthUser, IAuthTokens, ILoginCredentials, IMFAConfig } from '../interfaces/auth.interface';
 import { 
-    AuthStatus, 
-    AuthError, 
     MFAMethod, 
     UserRole,
     AUTH_TOKEN_KEY,
@@ -31,7 +29,7 @@ const msalConfig: Configuration = {
     },
     system: {
         loggerOptions: {
-            loggerCallback: (level, message, containsPii) => {
+            loggerCallback: (_level, message, containsPii) => {
                 if (!containsPii) console.log(message);
             },
             piiLoggingEnabled: false
@@ -54,7 +52,6 @@ export const useAuth = () => {
         status,
         user,
         tokens,
-        lastActivity,
         sessionExpiry
     } = useSelector((state: RootState) => state.auth);
 
@@ -146,9 +143,9 @@ export const useAuth = () => {
 
     /**
      * Verifies MFA challenge response
-     * @param code - Verification code
+     * @param _code - Verification code
      */
-    const verifyMFA = useCallback(async (code: string) => {
+    const verifyMFA = useCallback(async (_code: string) => {
         if (!user) throw new Error('User not authenticated');
 
         try {

@@ -1,13 +1,14 @@
 import React from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from '@sentry/react';
-import { SecurityMonitor } from '@myelixir/security-monitor';
+import { SecurityMonitor } from '@security/monitor';
 
 import PrivateRoute from './PrivateRoute';
 import ConsumerDashboard from '../pages/consumer/ConsumerDashboard';
 import HealthRecords from '../pages/consumer/HealthRecords';
 import Settings from '../pages/consumer/Settings';
 import { CONSUMER_ROUTES } from '../constants/routes.constants';
+import { SecurityLevel, UserRole } from '../types/auth.types';
 
 // Security monitoring configuration
 const SECURITY_CONFIG = {
@@ -31,7 +32,7 @@ const ConsumerRoutes: React.FC = () => {
     securityMonitor.trackRouteAccess({
       path: location.pathname,
       timestamp: new Date(),
-      requiresMfa: SECURITY_CONFIG.mfaRequired.includes(location.pathname),
+      requiresMfa: SECURITY_CONFIG.mfaRequired.includes(location.pathname as any),
       hipaaContext: true
     });
   }, [location.pathname]);
@@ -65,7 +66,7 @@ const ConsumerRoutes: React.FC = () => {
           element={
             <PrivateRoute
               Component={ConsumerDashboard}
-              allowedRoles={['consumer']}
+              allowedRoles={[UserRole.CONSUMER]}
               requireMFA={false}
               auditLogging={true}
             />
@@ -78,9 +79,9 @@ const ConsumerRoutes: React.FC = () => {
           element={
             <PrivateRoute
               Component={HealthRecords}
-              allowedRoles={['consumer']}
+              allowedRoles={[UserRole.CONSUMER]}
               requireMFA={true}
-              securityLevel="CRITICAL"
+              securityLevel={SecurityLevel.CRITICAL}
               auditLogging={true}
             />
           }
@@ -92,9 +93,9 @@ const ConsumerRoutes: React.FC = () => {
           element={
             <PrivateRoute
               Component={Settings}
-              allowedRoles={['consumer']}
+              allowedRoles={[UserRole.CONSUMER]}
               requireMFA={true}
-              securityLevel="HIGH"
+              securityLevel={SecurityLevel.HIGH}
               auditLogging={true}
             />
           }
@@ -106,9 +107,9 @@ const ConsumerRoutes: React.FC = () => {
           element={
             <PrivateRoute
               Component={HealthRecords}
-              allowedRoles={['consumer']}
+              allowedRoles={[UserRole.CONSUMER]}
               requireMFA={true}
-              securityLevel="CRITICAL"
+              securityLevel={SecurityLevel.CRITICAL}
               auditLogging={true}
             />
           }
@@ -120,9 +121,9 @@ const ConsumerRoutes: React.FC = () => {
           element={
             <PrivateRoute
               Component={HealthRecords}
-              allowedRoles={['consumer']}
+              allowedRoles={[UserRole.CONSUMER]}
               requireMFA={true}
-              securityLevel="HIGH"
+              securityLevel={SecurityLevel.HIGH}
               auditLogging={true}
             />
           }
@@ -134,7 +135,7 @@ const ConsumerRoutes: React.FC = () => {
           element={
             <PrivateRoute
               Component={ConsumerDashboard}
-              allowedRoles={['consumer']}
+              allowedRoles={[UserRole.CONSUMER]}
               requireMFA={false}
               auditLogging={true}
             />

@@ -8,9 +8,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   IConsent, 
-  ConsentStatus, 
-  IConsentPermissions, 
-  ValidationSeverity 
+  ConsentStatus
 } from '../interfaces/consent.interface';
 import { 
   fetchConsents, 
@@ -19,7 +17,7 @@ import {
   verifyBlockchainConsent, 
   logConsentAudit 
 } from '../store/actions/consent.actions';
-import ConsentService from '../services/consent.service';
+import { AppDispatch } from '../store/store';
 
 /**
  * Interface for loading states of consent operations
@@ -46,7 +44,7 @@ interface IErrorState {
  * @returns Object containing consent state and operations
  */
 export const useConsent = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   // Initialize loading and error states
   const [loading, setLoading] = useState<ILoadingState>({
@@ -77,11 +75,11 @@ export const useConsent = () => {
 
       await dispatch(fetchConsents());
 
-      dispatch(logConsentAudit('info', 'Successfully fetched user consents'));
+      dispatch(logConsentAudit('INFO', 'Successfully fetched user consents'));
     } catch (error) {
       const errorMessage = (error as Error).message;
       setError(prev => ({ ...prev, fetchError: errorMessage }));
-      dispatch(logConsentAudit('error', 'Failed to fetch consents', { error: errorMessage }));
+      dispatch(logConsentAudit('ERROR', 'Failed to fetch consents', { error: errorMessage }));
     } finally {
       setLoading(prev => ({ ...prev, fetchLoading: false }));
     }
@@ -100,7 +98,7 @@ export const useConsent = () => {
       // Verify blockchain record
       await dispatch(verifyBlockchainConsent(createdConsent.payload));
 
-      dispatch(logConsentAudit('info', 'Successfully granted consent', { 
+      dispatch(logConsentAudit('INFO', 'Successfully granted consent', { 
         consentId: createdConsent.payload.id 
       }));
 
@@ -108,7 +106,7 @@ export const useConsent = () => {
     } catch (error) {
       const errorMessage = (error as Error).message;
       setError(prev => ({ ...prev, grantError: errorMessage }));
-      dispatch(logConsentAudit('error', 'Failed to grant consent', { error: errorMessage }));
+      dispatch(logConsentAudit('ERROR', 'Failed to grant consent', { error: errorMessage }));
       throw error;
     } finally {
       setLoading(prev => ({ ...prev, grantLoading: false }));
@@ -125,11 +123,11 @@ export const useConsent = () => {
 
       await dispatch(revokeConsent(consentId));
 
-      dispatch(logConsentAudit('info', 'Successfully revoked consent', { consentId }));
+      dispatch(logConsentAudit('INFO', 'Successfully revoked consent', { consentId }));
     } catch (error) {
       const errorMessage = (error as Error).message;
       setError(prev => ({ ...prev, revokeError: errorMessage }));
-      dispatch(logConsentAudit('error', 'Failed to revoke consent', { 
+      dispatch(logConsentAudit('ERROR', 'Failed to revoke consent', { 
         error: errorMessage,
         consentId 
       }));
@@ -149,7 +147,7 @@ export const useConsent = () => {
 
       const isValid = await dispatch(verifyBlockchainConsent(consent));
 
-      dispatch(logConsentAudit('info', 'Successfully verified consent blockchain record', {
+      dispatch(logConsentAudit('INFO', 'Successfully verified consent blockchain record', {
         consentId: consent.id
       }));
 
@@ -157,7 +155,7 @@ export const useConsent = () => {
     } catch (error) {
       const errorMessage = (error as Error).message;
       setError(prev => ({ ...prev, verifyError: errorMessage }));
-      dispatch(logConsentAudit('error', 'Failed to verify consent blockchain record', {
+      dispatch(logConsentAudit('ERROR', 'Failed to verify consent blockchain record', {
         error: errorMessage,
         consentId: consent.id
       }));

@@ -1,4 +1,3 @@
-import { Resource } from '@medplum/fhirtypes'; // @medplum/fhirtypes ^2.0.0
 import { isResource, validateResource } from '@medplum/core'; // @medplum/core ^2.0.0
 import { 
   IFHIRResource,
@@ -11,7 +10,6 @@ import {
 import { 
   FHIR_VALIDATION_RULES,
   FHIR_MIME_TYPES,
-  FHIR_RESOURCE_TYPES,
   isFhirResourceType
 } from '../constants/fhir.constants';
 
@@ -36,7 +34,7 @@ interface FormatOptions {
   sortArrays?: boolean;
   removeEmpty?: boolean;
   validateMimeType?: boolean;
-  mimeType?: string;
+  mimeType?: keyof typeof FHIR_MIME_TYPES;
 }
 
 /**
@@ -65,7 +63,7 @@ const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
   sortArrays: true,
   removeEmpty: true,
   validateMimeType: true,
-  mimeType: FHIR_MIME_TYPES.JSON
+  mimeType: 'JSON'
 };
 
 /**
@@ -153,20 +151,7 @@ export async function validateFHIRResource(
 
     // Profile validation if enabled
     if (options.validateProfile && resource.meta?.profile?.length) {
-      const profileValidation = await validateResource(resource);
-      if (!profileValidation.success) {
-        profileValidation.issues?.forEach(issue => {
-          errors.push({
-            type: FHIRValidationErrorType.Pattern,
-            field: issue.expression?.[0] || 'unknown',
-            message: issue.diagnostics || 'Profile validation failed',
-            code: issue.code || 'PROFILE_VALIDATION_ERROR',
-            severity: ValidationSeverity.Error,
-            path: issue.expression || [],
-            context: { profile: resource.meta.profile }
-          });
-        });
-      }
+      await validateResource(resource);
     }
 
     // Check for timeout
@@ -212,7 +197,7 @@ export function formatFHIRResource(
 ): IFHIRResource {
   // Validate MIME type if enabled
   if (options.validateMimeType && options.mimeType) {
-    if (!Object.values(FHIR_MIME_TYPES).includes(options.mimeType)) {
+    if (!Object.values(FHIR_MIME_TYPES).includes(FHIR_MIME_TYPES[options.mimeType])) {
       throw new Error(`Invalid MIME type: ${options.mimeType}`);
     }
   }

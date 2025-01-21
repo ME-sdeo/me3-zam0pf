@@ -4,7 +4,6 @@ import { useVirtualizer } from '@tanstack/react-virtual'; // ^3.0.0
 import { ErrorBoundary } from 'react-error-boundary'; // ^4.0.0
 
 import { Card } from '../common/Card';
-import { IMarketplaceTransaction } from '../../interfaces/marketplace.interface';
 import { formatRelativeTime } from '../../utils/date.util';
 
 // Activity type definitions
@@ -50,7 +49,6 @@ export interface IRecentActivityProps {
   maxItems?: number;
   className?: string;
   onActivityClick?: (activity: IActivityItem) => void;
-  virtualizeThreshold?: number;
   loadingState: LoadingState;
   errorState?: Error;
   onRetry?: () => void;
@@ -136,7 +134,6 @@ export const RecentActivity: React.FC<IRecentActivityProps> = React.memo(({
   maxItems = 10,
   className,
   onActivityClick,
-  virtualizeThreshold = 20,
   loadingState,
   errorState,
   onRetry

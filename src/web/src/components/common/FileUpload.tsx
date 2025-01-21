@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Box, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import { validateFHIRResource } from '../../utils/validation.util';
 import { FHIR_VALIDATION } from '../constants/validation.constants';
-import { IFHIRValidationResult, ValidationSeverity } from '../interfaces/fhir.interface';
+import { IFHIRValidationResult } from '../interfaces/fhir.interface';
 
 /**
  * Interface for file upload error tracking

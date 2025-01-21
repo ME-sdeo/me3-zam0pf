@@ -5,10 +5,7 @@ import {
   IPaymentMethod, 
   IPaymentAmount, 
   IPaymentTransaction,
-  PaymentMethodType,
   PaymentCurrency,
-  MIN_PAYMENT_AMOUNT,
-  MAX_PAYMENT_AMOUNT,
   isValidPaymentMethod,
   isValidPaymentAmount
 } from '../interfaces/payment.interface';
@@ -50,6 +47,50 @@ export class PaymentService {
       encryption: COMPLIANCE_CONFIG.ENCRYPTION_LEVEL
     });
     this.blockchainService = new BlockchainService();
+  }
+
+  /**
+   * Fetches payment history for a user with pagination support
+   * @param userId User ID to fetch payment history for
+   * @param page Page number for pagination
+   * @param limit Number of records per page
+   * @returns Promise resolving to paginated payment transactions
+   */
+  public async fetchPaymentHistory(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    transactions: IPaymentTransaction[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    try {
+      // Log HIPAA-compliant audit trail for history access
+      await this.complianceLogger.logHistoryAccess({
+        userId,
+        page,
+        limit,
+        timestamp: new Date()
+      });
+
+      // Implementation would fetch from database/storage
+      // Placeholder implementation
+      return {
+        transactions: [],
+        total: 0,
+        page,
+        limit
+      };
+    } catch (error) {
+      await this.complianceLogger.logError({
+        operation: 'fetchPaymentHistory',
+        userId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
   }
 
   /**
@@ -132,7 +173,7 @@ export class PaymentService {
 
       // Verify blockchain transaction
       const blockchainVerification = await this.blockchainService.verifyTransaction({
-        ref: paymentIntent.metadata.blockchainRef,
+        ref: (paymentIntent as any).metadata?.blockchainRef,
         data: blockchainData
       });
 
@@ -146,6 +187,7 @@ export class PaymentService {
       // Create transaction record
       const transaction: IPaymentTransaction = {
         transactionId: confirmedPayment.id,
+        requestId: (paymentIntent as any).metadata?.requestId || '',
         amount: {
           value: confirmedPayment.amount / 100, // Convert from cents
           currency: confirmedPayment.currency as PaymentCurrency,
@@ -153,10 +195,17 @@ export class PaymentService {
           exchangeRateTimestamp: new Date(),
           isRefundable: true
         },
+        paymentMethod: (paymentIntent as any).metadata?.paymentMethod,
         status: TransactionStatus.COMPLETED,
         blockchainRef: blockchainVerification.ref,
         blockchainTxHash: blockchainVerification.txHash,
-        complianceMetadata: paymentIntent.metadata,
+        metadata: {
+          requestType: (paymentIntent as any).metadata?.requestType || '',
+          dataProvider: (paymentIntent as any).metadata?.dataProvider || '',
+          dataConsumer: (paymentIntent as any).metadata?.dataConsumer || '',
+          recordCount: (paymentIntent as any).metadata?.recordCount || 0,
+          consentId: (paymentIntent as any).metadata?.consentId || ''
+        },
         createdAt: new Date(confirmedPayment.created * 1000),
         updatedAt: new Date()
       };

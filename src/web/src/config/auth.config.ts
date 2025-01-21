@@ -24,7 +24,6 @@ export const msalConfig: Configuration = {
     redirectUri: window.location.origin + AUTH_ROUTES.CALLBACK,
     postLogoutRedirectUri: window.location.origin,
     navigateToLoginRequestUrl: true,
-    validateAuthority: true,
     protocolMode: 'AAD'
   },
   cache: {
@@ -45,10 +44,7 @@ export const msalConfig: Configuration = {
     },
     windowHashTimeout: 60000,
     iframeHashTimeout: 6000,
-    loadFrameTimeout: 0,
-    cryptoOptions: {
-      usePkce: true
-    }
+    loadFrameTimeout: 0
   }
 };
 

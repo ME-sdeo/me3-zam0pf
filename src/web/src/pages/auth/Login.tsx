@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Box, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { Container, Box, Typography, useTheme } from '@mui/material';
 import LoginForm from '../../components/auth/LoginForm';
 import { useAuth } from '../../hooks/useAuth';
-import { AuthError, MFAMethod, SecurityEvent } from '../../types/auth.types';
+import { AuthError, MFAMethod } from '../../types/auth.types';
 
 /**
  * Enhanced secure login page component for MyElixir healthcare data marketplace.
@@ -13,7 +13,6 @@ import { AuthError, MFAMethod, SecurityEvent } from '../../types/auth.types';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { isAuthenticated, user, securityMetrics } = useAuth();
 
   // Redirect authenticated users
@@ -46,7 +45,7 @@ const Login: React.FC = () => {
    * Processes security-related events during login
    * @param event - Security event details
    */
-  const handleSecurityEvent = (event: SecurityEvent) => {
+  const handleSecurityEvent = (event: { type: string; details: any }) => {
     try {
       securityMetrics.trackSecurityEvent(event);
 
@@ -73,7 +72,7 @@ const Login: React.FC = () => {
 
   /**
    * Manages MFA verification process
-   * @param context - MFA challenge context
+   * @param method - MFA challenge method
    */
   const handleMFAChallenge = async (method: MFAMethod) => {
     try {
@@ -137,7 +136,6 @@ const Login: React.FC = () => {
         <LoginForm
           onLoginSuccess={handleLoginSuccess}
           onSecurityEvent={handleSecurityEvent}
-          onMFARequired={handleMFAChallenge}
           mfaOptions={[MFAMethod.SMS, MFAMethod.AUTHENTICATOR_APP, MFAMethod.BIOMETRIC]}
           securityConfig={{
             maxAttempts: 5,

@@ -1,11 +1,29 @@
 import React, { Suspense } from 'react';
-import { Route, Routes, Navigate, useLocation } from 'react-router-dom'; // react-router-dom ^6.8.0
-import { SecurityMonitor } from '@security/monitor'; // @security/monitor ^2.1.0
-import { ErrorBoundary } from 'react-error-boundary'; // react-error-boundary ^4.0.0
-import { RouteAnalytics } from '@analytics/route-tracking'; // @analytics/route-tracking ^1.0.0
+import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { SecurityMonitor } from '@security/monitor';
+import { ErrorBoundary } from 'react-error-boundary';
+import { RouteAnalytics } from '@analytics/route-tracking';
 
 import PrivateRoute from './PrivateRoute';
 import { COMPANY_ROUTES } from '../constants/routes.constants';
+import { SecurityLevel, UserRole } from '../types/auth.types';
+
+// Retry logic for lazy loading
+const retryImport = <T,>(fn: () => Promise<T>, retries = 3): Promise<T> => {
+  return new Promise((resolve, reject) => {
+    fn()
+      .then(resolve)
+      .catch((error) => {
+        if (retries === 0) {
+          reject(error);
+          return;
+        }
+        setTimeout(() => {
+          retryImport(fn, retries - 1).then(resolve, reject);
+        }, 1000);
+      });
+  });
+};
 
 // Lazy loaded components with retry logic
 const CompanyDashboard = React.lazy(() => 
@@ -23,23 +41,6 @@ const Billing = React.lazy(() =>
 const Settings = React.lazy(() => 
   retryImport(() => import('../pages/company/Settings'))
 );
-
-// Retry logic for lazy loading
-const retryImport = (fn: () => Promise<any>, retries = 3) => {
-  return new Promise((resolve, reject) => {
-    fn()
-      .then(resolve)
-      .catch((error) => {
-        if (retries === 0) {
-          reject(error);
-          return;
-        }
-        setTimeout(() => {
-          retryImport(fn, retries - 1).then(resolve, reject);
-        }, 1000);
-      });
-  });
-};
 
 // Error fallback component
 const RouteErrorFallback: React.FC<{ error: Error }> = ({ error }) => {
@@ -92,9 +93,9 @@ const CompanyRoutes: React.FC = React.memo(() => {
 
   // Common route props
   const commonRouteProps = {
-    allowedRoles: ['company'],
+    allowedRoles: [UserRole.COMPANY] as UserRole[],
     requireMFA: true,
-    securityLevel: 'HIGH',
+    securityLevel: SecurityLevel.HIGH,
     auditLogging: true
   };
 
@@ -148,7 +149,7 @@ const CompanyRoutes: React.FC = React.memo(() => {
               <PrivateRoute
                 {...commonRouteProps}
                 Component={Billing}
-                securityLevel="CRITICAL"
+                securityLevel={SecurityLevel.CRITICAL}
               />
             }
           />

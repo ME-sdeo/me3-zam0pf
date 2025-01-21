@@ -34,7 +34,6 @@ const NotFound: React.FC = () => {
         <PageHeader
           title="Page Not Found"
           subtitle="The page you're looking for doesn't exist or has been moved."
-          role="banner"
         />
 
         <section 

@@ -10,7 +10,6 @@ const appInsights = new ApplicationInsights({
     config: {
         instrumentationKey: process.env.REACT_APP_APPINSIGHTS_KEY,
         enableAutoRouteTracking: true,
-        enableRequestTracing: true,
         enableCorsCorrelation: true
     }
 });

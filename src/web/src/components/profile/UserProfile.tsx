@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form'; // ^7.43.0
 import * as yup from 'yup'; // ^1.0.0
 import { Card } from '../common/Card';
 import { useAuth } from '../../hooks/useAuth';
-import { IUser } from '../../interfaces/user.interface';
 import { MFAMethod } from '../../types/auth.types';
 
 // Props interface with accessibility support
@@ -79,13 +78,11 @@ const profileSchema = yup.object().shape({
 
 export const UserProfile: React.FC<IUserProfileProps> = React.memo(({
   className,
-  ariaLabel = 'User Profile Settings',
-  theme = 'light'
+  ariaLabel = 'User Profile Settings'
 }) => {
   const { user, setupMFA, securityMetrics } = useAuth();
   
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<IProfileFormData>({
-    resolver: yup.resolver(profileSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<IProfileFormData>({
     defaultValues: {
       firstName: user?.profile.firstName || '',
       lastName: user?.profile.lastName || '',

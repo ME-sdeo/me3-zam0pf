@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Card } from '../../components/common/Card';
@@ -71,7 +72,7 @@ export const Settings: React.FC<ISettingsProps> = React.memo(({
 }) => {
   const { user, setupMFA, securityMetrics } = useAuth();
   const { register, handleSubmit, watch, formState: { errors } } = useForm<ISettingsFormData>({
-    resolver: yup.object().shape(settingsSchema),
+    resolver: yupResolver(settingsSchema),
     defaultValues: {
       notificationPreferences: {
         emailNotifications: true,
@@ -129,7 +130,6 @@ export const Settings: React.FC<ISettingsProps> = React.memo(({
       <PageHeader
         title="Settings"
         subtitle="Manage your account preferences and security settings"
-        theme={theme}
       />
 
       <form onSubmit={handleSubmit(onSubmit)} aria-label="Settings form">
@@ -147,6 +147,11 @@ export const Settings: React.FC<ISettingsProps> = React.memo(({
                 aria-describedby="email-notifications-error"
               />
               Email Notifications
+              {errors.notificationPreferences?.emailNotifications && (
+                <span id="email-notifications-error" className="error-message">
+                  {errors.notificationPreferences.emailNotifications.message}
+                </span>
+              )}
             </label>
             {/* Additional notification preferences fields */}
           </div>
@@ -166,6 +171,11 @@ export const Settings: React.FC<ISettingsProps> = React.memo(({
                 aria-describedby="hipaa-compliance-error"
               />
               <label>HIPAA Compliance</label>
+              {errors.dataSharingPreferences?.hipaaCompliance && (
+                <span id="hipaa-compliance-error" className="error-message">
+                  {errors.dataSharingPreferences.hipaaCompliance.message}
+                </span>
+              )}
             </div>
             {/* Additional data sharing preferences fields */}
           </div>
@@ -185,6 +195,11 @@ export const Settings: React.FC<ISettingsProps> = React.memo(({
                 aria-describedby="mfa-enabled-error"
               />
               <label>Enable Multi-Factor Authentication</label>
+              {errors.securitySettings?.mfaEnabled && (
+                <span id="mfa-enabled-error" className="error-message">
+                  {errors.securitySettings.mfaEnabled.message}
+                </span>
+              )}
             </div>
 
             {watchMFAEnabled && (
@@ -199,6 +214,11 @@ export const Settings: React.FC<ISettingsProps> = React.memo(({
                   <option value="sms">SMS</option>
                   <option value="biometric">Biometric</option>
                 </select>
+                {errors.securitySettings?.mfaMethod && (
+                  <span id="mfa-method-error" className="error-message">
+                    {errors.securitySettings.mfaMethod.message}
+                  </span>
+                )}
               </div>
             )}
             {/* Additional security settings fields */}

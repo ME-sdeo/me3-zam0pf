@@ -20,6 +20,7 @@ import {
   updateConsentPermissions, 
   getUserConsents 
 } from '../api/consent.api';
+import { Resource } from '@medplum/fhirtypes';
 
 /**
  * Service class implementing secure consent management operations
@@ -41,7 +42,7 @@ export class ConsentService {
 
       // Validate FHIR resource types in permissions
       for (const resourceType of consentData.permissions.resourceTypes) {
-        const fhirValidation = await validateFHIRResource({ resourceType });
+        const fhirValidation = await validateFHIRResource({ resourceType } as Resource);
         if (!fhirValidation.valid) {
           throw new Error(`Invalid FHIR resource type: ${resourceType}`);
         }
@@ -63,6 +64,12 @@ export class ConsentService {
 
       // Create consent with blockchain verification
       const createdConsent = await grantConsent(enhancedData);
+
+      // Verify blockchain record
+      const isValid = await this.verifyBlockchainConsent(createdConsent);
+      if (!isValid) {
+        throw new Error('Blockchain verification failed for created consent');
+      }
 
       return createdConsent;
     } catch (error) {
@@ -112,6 +119,12 @@ export class ConsentService {
       // Update consent with blockchain verification
       const updatedConsent = await updateConsentPermissions(consentId, permissions);
 
+      // Verify blockchain record
+      const isValid = await this.verifyBlockchainConsent(updatedConsent);
+      if (!isValid) {
+        throw new Error('Blockchain verification failed for updated consent');
+      }
+
       return updatedConsent;
     } catch (error) {
       console.error('Error updating consent:', error);
@@ -144,6 +157,45 @@ export class ConsentService {
     } catch (error) {
       console.error('Error retrieving consents:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Verifies blockchain record for a consent
+   * @param consent - Consent record to verify
+   * @returns Promise resolving to boolean indicating validity
+   */
+  private async verifyBlockchainConsent(consent: IConsent): Promise<boolean> {
+    try {
+      if (!consent.blockchainRef) {
+        return false;
+      }
+
+      // Verify blockchain record exists and matches consent data
+      const response = await fetch(`${process.env.BLOCKCHAIN_API_URL}/verify/${consent.blockchainRef}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          consentId: consent.id,
+          userId: consent.userId,
+          companyId: consent.companyId,
+          permissions: consent.permissions,
+          validFrom: consent.validFrom,
+          validTo: consent.validTo
+        })
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const result = await response.json();
+      return result.verified === true;
+    } catch (error) {
+      console.error('Error verifying blockchain consent:', error);
+      return false;
     }
   }
 

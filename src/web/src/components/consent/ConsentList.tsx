@@ -33,7 +33,6 @@ const ConsentList: React.FC<ConsentListProps> = ({
   const { 
     consents, 
     loading, 
-    error, 
     fetchConsents, 
     revokeConsent, 
     verifyBlockchain 
@@ -161,8 +160,8 @@ const ConsentList: React.FC<ConsentListProps> = ({
     
     for (const consent of consents) {
       try {
-        const isVerified = await verifyBlockchain(consent);
-        verificationResults[consent.id] = isVerified;
+        const result = await verifyBlockchain(consent);
+        verificationResults[consent.id] = result.payload;
       } catch (error) {
         console.error(`Blockchain verification failed for consent ${consent.id}:`, error);
         verificationResults[consent.id] = false;

@@ -1,5 +1,3 @@
-import { MedplumClient } from '@medplum/core'; // @medplum/core ^2.0.0
-import { Resource } from '@medplum/fhirtypes'; // @medplum/fhirtypes ^2.0.0
 import axios from 'axios'; // axios ^1.4.0
 import { 
   IFHIRResource, 
@@ -12,7 +10,6 @@ import { validateFHIRResource } from '../utils/fhir.util';
 // Global constants for API configuration
 const FHIR_API_TIMEOUT = 30000;
 const FHIR_API_RETRY_ATTEMPTS = 3;
-const FHIR_API_CACHE_DURATION = 300000; // 5 minutes
 const FHIR_API_REQUEST_DEDUP_WINDOW = 5000; // 5 seconds
 
 // Request deduplication cache

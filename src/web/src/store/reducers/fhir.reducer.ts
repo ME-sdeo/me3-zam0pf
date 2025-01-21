@@ -1,5 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'; // @reduxjs/toolkit ^1.9.0
-import { ValidationError } from '@fhir/validator'; // @fhir/validator ^2.0.0
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IFHIRResource } from '../../interfaces/fhir.interface';
 import { 
   uploadFHIRResourceThunk,
@@ -17,8 +16,8 @@ interface IFHIRState {
   error: string | null;
   validationResult: {
     valid: boolean;
-    errors: ValidationError[];
-    warnings: ValidationError[];
+    errors: IFHIRValidationError[];
+    warnings: IFHIRValidationError[];
   } | null;
   pagination: {
     page: number;

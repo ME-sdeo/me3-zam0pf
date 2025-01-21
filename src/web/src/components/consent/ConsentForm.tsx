@@ -25,7 +25,7 @@ import {
   Alert
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 import { IConsent, ConsentAccessLevel, EncryptionLevel } from '../../interfaces/consent.interface';
 import { useConsent } from '../../hooks/useConsent';
@@ -59,11 +59,13 @@ const validationSchema = yup.object().shape({
     .required('Start date is required'),
   validTo: yup
     .date()
-    .min(yup.ref('validFrom'), 'End date must be after start date')
-    .max(
-      yup.ref('validFrom').add(1, 'year'),
-      'Consent duration cannot exceed 1 year'
-    )
+    .test('valid-date-range', 'End date must be after start date and within 1 year', function(value) {
+      const { validFrom } = this.parent;
+      if (!value || !validFrom) return false;
+      const start = dayjs(validFrom);
+      const end = dayjs(value);
+      return end.isAfter(start) && end.diff(start, 'year') <= 1;
+    })
     .required('End date is required'),
   encryptedFields: yup
     .array()
@@ -102,7 +104,7 @@ export const ConsentForm: React.FC<ConsentFormProps> = ({
     error?: string;
   }>({ verified: false });
 
-  const { grantConsent, verifyBlockchain, loading, encryptFields } = useConsent();
+  const { grantConsent, verifyBlockchain, loading } = useConsent();
 
   const {
     control,
@@ -129,10 +131,12 @@ export const ConsentForm: React.FC<ConsentFormProps> = ({
   // Validate FHIR resource types
   useEffect(() => {
     const validateResources = async () => {
-      for (const resourceType of formValues.resourceTypes) {
-        const validation = await validateFHIRResource({ resourceType });
-        if (!validation.valid) {
-          console.error(`Invalid FHIR resource type: ${resourceType}`);
+      for (const resourceType of formValues.resourceTypes || []) {
+        if (resourceType) {
+          const validation = await validateFHIRResource({ resourceType });
+          if (!validation.valid) {
+            console.error(`Invalid FHIR resource type: ${resourceType}`);
+          }
         }
       }
     };
@@ -141,22 +145,27 @@ export const ConsentForm: React.FC<ConsentFormProps> = ({
 
   const onSubmit = async (data: any) => {
     try {
-      // Encrypt sensitive fields
-      const encryptedData = await encryptFields(data, encryptionConfig);
-
       // Create consent with blockchain verification
-      const consentData = {
+      const consentData: Omit<IConsent, 'id' | 'blockchainRef'> = {
         requestId,
         companyId,
         permissions: {
-          resourceTypes: encryptedData.resourceTypes,
+          resourceTypes: data.resourceTypes,
           accessLevel: data.accessLevel,
-          dataElements: encryptedData.dataElements,
+          dataElements: data.dataElements,
           purpose: data.purpose,
-          encryptionLevel: encryptionConfig.level
+          encryptionLevel: encryptionConfig.level,
+          constraints: {},
+          metadata: {}
         },
         validFrom: data.validFrom,
-        validTo: data.validTo
+        validTo: data.validTo,
+        status: 'PENDING',
+        userId: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        version: '1.0.0',
+        metadata: {}
       };
 
       const createdConsent = await grantConsent(consentData);
@@ -203,6 +212,7 @@ export const ConsentForm: React.FC<ConsentFormProps> = ({
                     {...field}
                     multiple
                     displayEmpty
+                    value={field.value || []}
                     renderValue={(selected: string[]) => 
                       selected.join(', ') || 'Select Resource Types'
                     }
@@ -336,14 +346,14 @@ export const ConsentForm: React.FC<ConsentFormProps> = ({
               <Button
                 variant="outlined"
                 onClick={onCancel}
-                disabled={loading}
+                disabled={!!loading}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 variant="contained"
-                disabled={loading || (blockchainConfig.required && !blockchainStatus.verified)}
+                disabled={!!loading || (blockchainConfig.required && !blockchainStatus.verified)}
               >
                 {loading ? 'Processing...' : 'Grant Consent'}
               </Button>

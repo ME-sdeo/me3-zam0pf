@@ -8,7 +8,6 @@ import {
   IFHIRValidationError
 } from '../interfaces/fhir.interface';
 import { 
-  FHIR_VERSION, 
   FHIR_VALIDATION_RULES,
   FHIR_MIME_TYPES 
 } from '../constants/fhir.constants';
@@ -19,7 +18,6 @@ const MAX_CACHE_SIZE = 100;
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_BACKOFF_MS = 1000;
 const VALIDATION_TIMEOUT_MS = 5000;
-const BATCH_SIZE_LIMIT = 50;
 
 interface FHIRMetrics {
   validationSuccessRate: number;
@@ -102,7 +100,7 @@ export function useFHIR(config: UseFHIRConfig = {}) {
 
       // Comprehensive validation with timeout
       const validationPromise = new Promise<IFHIRValidationResult>(
-        async (resolve, reject) => {
+        async (resolve) => {
           const errors: IFHIRValidationError[] = [];
           
           // Validate required fields
@@ -151,7 +149,8 @@ export function useFHIR(config: UseFHIRConfig = {}) {
       }
 
       return result;
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       throw new Error(`Validation failed: ${error.message}`);
     }
   }, [enableMetrics]);
@@ -218,7 +217,7 @@ export function useFHIR(config: UseFHIRConfig = {}) {
       }
 
       return uploadedResource;
-    } catch (error) {
+    } catch (err) {
       // Revert optimistic update
       setResources(prev => 
         prev.filter(r => r.id !== resource.id)
@@ -228,7 +227,8 @@ export function useFHIR(config: UseFHIRConfig = {}) {
         metricsRef.current.totalErrors++;
       }
 
-      const fhirError: FHIRError = new Error(error.message);
+      const error = err as Error;
+      const fhirError = new Error(error.message) as FHIRError;
       fhirError.code = 'UPLOAD_FAILED';
       setError(fhirError);
       throw fhirError;
@@ -256,7 +256,7 @@ export function useFHIR(config: UseFHIRConfig = {}) {
         if (enableMetrics) {
           metricsRef.current.cacheHits++;
         }
-        return cachedEntry.data as IFHIRResource[];
+        return Array.isArray(cachedEntry.data) ? cachedEntry.data : [cachedEntry.data];
       }
 
       // Deduplicate in-flight requests
@@ -285,7 +285,9 @@ export function useFHIR(config: UseFHIRConfig = {}) {
       // Update cache with LRU eviction
       if (cache.current.size >= MAX_CACHE_SIZE) {
         const oldestKey = cache.current.keys().next().value;
-        cache.current.delete(oldestKey);
+        if (oldestKey) {
+          cache.current.delete(oldestKey);
+        }
       }
       cache.current.set(cacheKey, {
         data: results,
@@ -300,12 +302,13 @@ export function useFHIR(config: UseFHIRConfig = {}) {
       }
 
       return results;
-    } catch (error) {
+    } catch (err) {
       if (enableMetrics) {
         metricsRef.current.totalErrors++;
       }
 
-      const fhirError: FHIRError = new Error(error.message);
+      const error = err as Error;
+      const fhirError = new Error(error.message) as FHIRError;
       fhirError.code = 'SEARCH_FAILED';
       setError(fhirError);
       throw fhirError;

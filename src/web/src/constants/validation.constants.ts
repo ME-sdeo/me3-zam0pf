@@ -128,7 +128,9 @@ export const validateMfaCode = (code: string): boolean => {
   return code.length === USER_VALIDATION.MFA_CODE_LENGTH && /^\d+$/.test(code);
 };
 
-export const validateFhirResourceType = (resourceType: string): boolean => {
+type FhirResourceType = typeof FHIR_VALIDATION.RESOURCE_TYPES[number];
+
+export const validateFhirResourceType = (resourceType: FhirResourceType): boolean => {
   return FHIR_VALIDATION.RESOURCE_TYPES.includes(resourceType);
 };
 

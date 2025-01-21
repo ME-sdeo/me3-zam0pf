@@ -19,6 +19,9 @@ import { ethers } from 'ethers';
 import { useFocusRing } from '@react-aria/focus';
 
 import CompanyProfile from '../../components/profile/CompanyProfile';
+import SecuritySettings from '../../components/settings/SecuritySettings';
+import ComplianceSettings from '../../components/settings/ComplianceSettings';
+import NotificationSettings from '../../components/settings/NotificationSettings';
 import { Card } from '../../components/common/Card';
 import { useNotification } from '../../hooks/useNotification';
 import axiosInstance from '../../utils/api.util';
@@ -27,7 +30,7 @@ import { API_ENDPOINTS } from '../../constants/api.constants';
 interface ISettingsTabConfig {
   id: string;
   label: string;
-  icon: React.ReactNode;
+  icon: React.ReactElement;
   component: React.ReactNode;
   ariaLabel: string;
   securityLevel: 'low' | 'medium' | 'high';
@@ -66,8 +69,7 @@ const Settings: React.FC = React.memo(() => {
   const [error, setError] = useState<string | null>(null);
 
   // Hooks
-  const { notifications } = useNotification();
-  const { isFocusVisible, focusProps } = useFocusRing();
+  const { focusProps } = useFocusRing();
 
   // Tab configuration
   const settingsTabs: ISettingsTabConfig[] = [
@@ -117,13 +119,15 @@ const Settings: React.FC = React.memo(() => {
   useEffect(() => {
     const initializeBlockchain = async () => {
       try {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const network = await provider.getNetwork();
-        setBlockchainStatus(prev => ({
-          ...prev,
-          connected: true,
-          lastSync: new Date()
-        }));
+        if (window.ethereum) {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          await provider.getNetwork();
+          setBlockchainStatus(prev => ({
+            ...prev,
+            connected: true,
+            lastSync: new Date()
+          }));
+        }
       } catch (error) {
         console.error('Blockchain initialization error:', error);
         setError('Failed to connect to blockchain network');
@@ -159,7 +163,7 @@ const Settings: React.FC = React.memo(() => {
   ) => {
     try {
       // Create blockchain transaction for high-security updates
-      if (securityLevel === 'high') {
+      if (securityLevel === 'high' && window.ethereum) {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
         
@@ -190,7 +194,7 @@ const Settings: React.FC = React.memo(() => {
   }, []);
 
   // Handle tab changes
-  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: string) => {
+  const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
   }, []);
 

@@ -8,6 +8,15 @@ import { ErrorBoundary } from 'react-error-boundary';
 import App from './App';
 import { store } from './store/store';
 
+// Add module declaration for webpack hot module replacement
+declare global {
+  interface NodeModule {
+    hot?: {
+      accept(path: string, callback: () => void): void;
+    };
+  }
+}
+
 // Initialize Application Insights for HIPAA-compliant monitoring
 const appInsights = new ApplicationInsights({
   config: {

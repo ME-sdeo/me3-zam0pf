@@ -1,17 +1,7 @@
 import React from 'react'; // ^18.0.0
 import classNames from 'classnames'; // ^2.3.2
 import Button from './Button';
-
-import {
-  'page-header': pageHeader,
-  'page-header--medical': pageHeaderMedical,
-  'page-header__back': pageHeaderBack,
-  'page-header__content': pageHeaderContent,
-  'page-header__title': pageHeaderTitle,
-  'page-header__subtitle': pageHeaderSubtitle,
-  'page-header__action': pageHeaderAction,
-  'page-header__blockchain': pageHeaderBlockchain
-} from '../../styles/components/_page-header.scss';
+import styles from '../../styles/components/_page-header.scss';
 
 // Type definitions
 interface ActionButtonProps {
@@ -40,9 +30,9 @@ interface PageHeaderProps {
 // Helper function to generate header classes
 const getHeaderClasses = (className?: string, medicalEnvironment?: boolean): string => {
   return classNames(
-    pageHeader,
+    styles['page-header'],
     {
-      [pageHeaderMedical]: medicalEnvironment,
+      [styles['page-header--medical']]: medicalEnvironment,
     },
     className
   );
@@ -68,13 +58,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     >
       {/* Back button with consent preservation */}
       {backButton?.show && (
-        <div className={pageHeaderBack}>
+        <div className={styles['page-header__back']}>
           <Button
             variant="outline"
             onClick={backButton.onClick}
             ariaLabel="Go back"
             medicalEnvironment={medicalEnvironment}
-            consentRequired={backButton.preserveConsent}
+            requiresConsent={backButton.preserveConsent}
           >
             <span aria-hidden="true">←</span>
             <span className="visually-hidden">Back</span>
@@ -83,9 +73,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       )}
 
       {/* Header content with enhanced contrast for medical environments */}
-      <div className={pageHeaderContent}>
+      <div className={styles['page-header__content']}>
         <h1 
-          className={pageHeaderTitle}
+          className={styles['page-header__title']}
           style={{
             // Enhanced contrast for medical environments
             fontWeight: medicalEnvironment ? 500 : 400,
@@ -97,7 +87,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         {subtitle && (
           <p 
-            className={pageHeaderSubtitle}
+            className={styles['page-header__subtitle']}
             style={{
               // Enhanced visibility for medical environments
               opacity: medicalEnvironment ? 0.95 : 0.87,
@@ -110,11 +100,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
       {/* Action button with consent and blockchain states */}
       {actionButton && (
-        <div className={pageHeaderAction}>
+        <div className={styles['page-header__action']}>
           <Button
             variant={actionButton.variant || 'primary'}
             onClick={actionButton.onClick}
-            consentRequired={actionButton.consentRequired}
+            requiresConsent={actionButton.consentRequired}
             medicalEnvironment={medicalEnvironment}
             transactionPending={actionButton.blockchainState === 'pending'}
             ariaLabel={actionButton.label}
@@ -125,7 +115,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {/* Blockchain state indicator */}
           {actionButton.blockchainState && (
             <div 
-              className={pageHeaderBlockchain}
+              className={styles['page-header__blockchain']}
               aria-live="polite"
               role="status"
             >

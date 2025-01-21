@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Grid } from '@mui/material'; // ^5.0.0
-import { ErrorBoundary } from 'react-error-boundary'; // ^3.1.4
-import useWebSocket from 'react-use-websocket'; // ^4.3.1
+import { Grid } from '@mui/material';
+import { ErrorBoundary } from 'react-error-boundary';
+import useWebSocket from 'react-use-websocket';
 
 import ActivityChart from '../../components/dashboard/ActivityChart';
 import CompensationChart from '../../components/dashboard/CompensationChart';
@@ -9,8 +9,8 @@ import MetricsCard from '../../components/dashboard/MetricsCard';
 import RecentActivity from '../../components/dashboard/RecentActivity';
 import { useAuth } from '../../hooks/useAuth';
 import { useMarketplace } from '../../hooks/useMarketplace';
-import { BlockchainVerification } from '@myelixir/blockchain-verification'; // ^1.0.0
-import { HIPAACompliance } from '@myelixir/hipaa-compliance'; // ^1.0.0
+import { BlockchainVerification } from '@myelixir/blockchain-verification';
+import { HIPAACompliance } from '@myelixir/hipaa-compliance';
 import { API_ENDPOINTS } from '../../constants/api.constants';
 import { ActivityType, LoadingState } from '../../components/dashboard/RecentActivity';
 
@@ -42,7 +42,7 @@ const WEBSOCKET_EVENTS = {
 
 const ConsumerDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { requests, matches, loading: marketplaceLoading } = useMarketplace();
+  const { requests, matches } = useMarketplace();
   const [metrics, setMetrics] = useState<IDashboardMetrics | null>(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState<typeof TIME_RANGES[number]['value']>('week');
   const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.LOADING);
@@ -82,7 +82,7 @@ const ConsumerDashboard: React.FC = () => {
       const metrics: IDashboardMetrics = {
         activeRequests: filteredRequests.length,
         dataShared: matches.length,
-        totalCompensation: matches.reduce((sum, match) => sum + (match.pricePerRecord || 0), 0),
+        totalCompensation: matches.reduce((sum, match) => sum + (match.amount?.value || 0), 0),
         requestMatches: matches.filter(match => match.score >= 0.7).length,
         blockchainVerified: false,
         lastVerifiedAt: new Date(),
@@ -91,7 +91,7 @@ const ConsumerDashboard: React.FC = () => {
 
       // Verify blockchain transactions
       const blockchainVerified = await blockchainVerification.verifyTransactions(
-        matches.map(match => match.blockchainRef)
+        matches.map(match => match.blockchainRef || '')
       );
       metrics.blockchainVerified = blockchainVerified;
 
@@ -135,7 +135,7 @@ const ConsumerDashboard: React.FC = () => {
   }, [fetchDashboardMetrics, selectedTimeRange]);
 
   // Error boundary fallback
-  const ErrorFallback = ({ error, resetErrorBoundary }) => (
+  const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
     <div role="alert" className="dashboard-error">
       <h2>Dashboard Error</h2>
       <p>{error.message}</p>
@@ -201,6 +201,7 @@ const ConsumerDashboard: React.FC = () => {
                 auditLevel: 'FULL',
                 retentionPeriod: '7_YEARS'
               }}
+              userId={user?.id || ''}
             />
           </Grid>
 
@@ -210,14 +211,14 @@ const ConsumerDashboard: React.FC = () => {
               activities={matches.map(match => ({
                 id: match.id,
                 type: ActivityType.DATA_SHARED,
-                title: `Data shared with ${match.companyName}`,
-                description: `Matched request for ${match.resourceType} data`,
+                title: `Data shared with ${match.metadata?.companyName || 'Unknown Company'}`,
+                description: `Matched request for ${match.metadata?.resourceType || 'Unknown'} data`,
                 timestamp: new Date(match.createdAt),
                 metadata: {
                   blockchainRef: match.blockchainRef,
-                  amount: match.pricePerRecord
+                  amount: match.amount?.value
                 },
-                accessibilityLabel: `Data shared with ${match.companyName} at ${new Date(match.createdAt).toLocaleString()}`,
+                accessibilityLabel: `Data shared with ${match.metadata?.companyName || 'Unknown Company'} at ${new Date(match.createdAt).toLocaleString()}`,
                 priority: 1
               }))}
               loadingState={loadingState}

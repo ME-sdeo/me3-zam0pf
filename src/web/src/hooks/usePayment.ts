@@ -1,21 +1,16 @@
 import { useDispatch, useSelector } from 'react-redux'; // react-redux ^8.1.0
 import { useState, useCallback } from 'react'; // react ^18.0.0
 import { 
-  paymentActions,
-  createPaymentIntentAction,
-  confirmPaymentAction,
-  getPaymentHistoryAction,
-  verifyBlockchainTransactionAction
+  initializePayment,
+  processPayment,
+  fetchPaymentHistory,
+  verifyBlockchainTransaction
 } from '../store/actions/payment.actions';
 import { 
   IPaymentTransaction,
   IPaymentMethod,
-  IPaymentAmount,
-  PaymentMethodType,
-  PAYMENT_TIMEOUT_MS,
-  MAX_RETRY_ATTEMPTS
+  IPaymentAmount
 } from '../interfaces/payment.interface';
-import { TransactionStatus } from '../types/marketplace.types';
 
 // Error messages for payment operations
 const PAYMENT_ERROR_MESSAGES = {
@@ -67,17 +62,17 @@ export const usePayment = () => {
     
     try {
       // Create payment intent with compliance metadata
-      const paymentIntent = await dispatch(createPaymentIntentAction({
-        amount: paymentDetails.amount,
-        paymentMethod: paymentDetails.paymentMethod,
-        complianceMetadata: {
+      const paymentIntent = await dispatch(initializePayment(
+        paymentDetails.amount,
+        paymentDetails.paymentMethod,
+        {
           hipaaCompliant: true,
           ...paymentDetails.metadata
         }
-      }));
+      ));
 
       // Verify blockchain transaction
-      const blockchainVerification = await dispatch(verifyBlockchainTransactionAction(
+      const blockchainVerification = await dispatch(verifyBlockchainTransaction(
         paymentIntent.metadata.blockchainRef
       ));
 
@@ -107,13 +102,13 @@ export const usePayment = () => {
     setError(null);
 
     try {
-      const confirmedPayment = await dispatch(confirmPaymentAction(
+      const confirmedPayment = await dispatch(processPayment(
         paymentIntentId,
         blockchainData
       ));
 
       // Verify final blockchain status
-      const verificationResult = await dispatch(verifyBlockchainTransactionAction(
+      const verificationResult = await dispatch(verifyBlockchainTransaction(
         confirmedPayment.blockchainRef
       ));
 
@@ -143,7 +138,7 @@ export const usePayment = () => {
     setError(null);
 
     try {
-      const history = await dispatch(getPaymentHistoryAction(userId, page, limit));
+      const history = await dispatch(fetchPaymentHistory(userId, page, limit));
       return history;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -164,7 +159,7 @@ export const usePayment = () => {
     setError(null);
 
     try {
-      const isValid = await dispatch(verifyBlockchainTransactionAction(blockchainRef));
+      const isValid = await dispatch(verifyBlockchainTransaction(blockchainRef));
       setBlockchainVerified(isValid);
       return isValid;
     } catch (err) {
@@ -175,31 +170,6 @@ export const usePayment = () => {
       setLoading(false);
     }
   }, [dispatch]);
-
-  /**
-   * Helper function to implement retry logic with exponential backoff
-   */
-  const withRetry = async <T>(
-    operation: () => Promise<T>,
-    retryCount: number = PAYMENT_RETRY_CONFIG.MAX_RETRIES
-  ): Promise<T> => {
-    let lastError: Error;
-    
-    for (let attempt = 1; attempt <= retryCount; attempt++) {
-      try {
-        return await operation();
-      } catch (err) {
-        lastError = err instanceof Error ? err : new Error('Operation failed');
-        if (attempt === retryCount) break;
-        
-        const delay = PAYMENT_RETRY_CONFIG.INITIAL_DELAY * 
-          Math.pow(PAYMENT_RETRY_CONFIG.BACKOFF_FACTOR, attempt - 1);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-    
-    throw lastError!;
-  };
 
   return {
     createPaymentIntent,

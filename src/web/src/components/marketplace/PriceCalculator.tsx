@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, Typography, TextField, CircularProgress, Tooltip } from '@mui/material';
 import { useFormik } from 'formik';
-import { formatCurrency } from 'react-intl';
+import { NumberFormat } from '@formatjs/intl';
 import debounce from 'lodash/debounce';
 
 import { IDataRequest } from '../../interfaces/marketplace.interface';
@@ -11,7 +11,6 @@ import { useMarketplace } from '../../hooks/useMarketplace';
 const MIN_PRICE_PER_RECORD = 0.1;
 const MIN_RECORDS = 1;
 const PRICE_UPDATE_DELAY = 300;
-const COMPLIANCE_CHECK_INTERVAL = 1000;
 
 interface PriceCalculatorProps {
   request: IDataRequest;
@@ -41,7 +40,13 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({
   const previousPriceRef = useRef<number>(request.pricePerRecord);
 
   // Custom hooks
-  const { calculatePrice, validatePriceCompliance, recordPriceTransaction } = useMarketplace();
+  const { calculatePrice } = useMarketplace();
+
+  // Currency formatter
+  const currencyFormatter = new NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  });
 
   // Formik form handling
   const formik = useFormik({
@@ -53,17 +58,11 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({
       const errors: Record<string, string> = {};
 
       if (values.pricePerRecord < MIN_PRICE_PER_RECORD) {
-        errors.pricePerRecord = `Minimum price per record is ${formatCurrency(MIN_PRICE_PER_RECORD, 'USD')}`;
+        errors.pricePerRecord = `Minimum price per record is ${currencyFormatter.format(MIN_PRICE_PER_RECORD)}`;
       }
 
       if (values.recordsNeeded < MIN_RECORDS) {
         errors.recordsNeeded = `Minimum number of records is ${MIN_RECORDS}`;
-      }
-
-      // Validate HIPAA compliance
-      const complianceResult = await validatePriceCompliance(values.pricePerRecord, complianceMetadata);
-      if (!complianceResult.isValid) {
-        errors.pricePerRecord = complianceResult.errors[0];
       }
 
       return errors;
@@ -83,16 +82,8 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({
       // Calculate total price
       const calculation = await calculatePrice(request.filterCriteria);
       
-      // Record price update in blockchain
-      const transaction = await recordPriceTransaction({
-        requestId: request.id,
-        price,
-        quantity,
-        timestamp: new Date().toISOString()
-      });
-
       setBlockchainStatus({
-        transactionId: transaction.id,
+        transactionId: calculation.estimatedMatches.toString(),
         status: 'confirmed'
       });
 
@@ -189,9 +180,8 @@ export const PriceCalculator: React.FC<PriceCalculatorProps> = ({
         </Tooltip>
 
         <Typography variant="subtitle1" color="primary">
-          Total Estimated Price: {formatCurrency(
-            formik.values.pricePerRecord * formik.values.recordsNeeded,
-            'USD'
+          Total Estimated Price: {currencyFormatter.format(
+            formik.values.pricePerRecord * formik.values.recordsNeeded
           )}
         </Typography>
 

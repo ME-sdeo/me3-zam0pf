@@ -1,5 +1,4 @@
 import { TransactionStatus } from './marketplace.types';
-import { PaymentIntent } from '@stripe/stripe-js'; // @stripe/stripe-js ^1.54.0
 
 /**
  * Enumeration of supported payment method types with PCI-compliant implementations

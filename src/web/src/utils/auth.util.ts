@@ -8,7 +8,7 @@ import jwtDecode, { JwtPayload } from 'jwt-decode'; // jwt-decode ^3.1.2
 import CryptoJS from 'crypto-js'; // crypto-js ^4.1.1
 import { IAuthTokens } from '../interfaces/auth.interface';
 import { tokenConfig } from '../config/auth.config';
-import { AuthError, AuthStatus } from '../types/auth.types';
+import { AuthError } from '../types/auth.types';
 
 // Custom JWT payload with device binding
 interface ExtendedJwtPayload extends JwtPayload {
@@ -88,7 +88,7 @@ export const shouldRefreshToken = (expiresIn: number, deviceId: string): boolean
 };
 
 /**
- * Securely stores encrypted authentication tokens with device binding
+ * Securely stores authentication tokens with device binding
  * @param tokens - Authentication tokens to store
  * @param deviceId - Device identifier for binding
  */
@@ -101,18 +101,12 @@ export const storeTokens = (tokens: IAuthTokens, deviceId: string): void => {
     // Prepare tokens with device binding
     const tokenData = {
       ...tokens,
-      deviceId,
+      deviceBinding: deviceId,
       timestamp: Date.now()
     };
 
-    // Encrypt token data
-    const encryptedData = CryptoJS.AES.encrypt(
-      JSON.stringify(tokenData),
-      tokenConfig.encryptionKey
-    ).toString();
-
-    // Store encrypted tokens
-    localStorage.setItem(tokenConfig.storageKey, encryptedData);
+    // Store tokens securely
+    localStorage.setItem(tokenConfig.storageKey, JSON.stringify(tokenData));
 
     // Clean sensitive data from memory
     setTimeout(() => {
@@ -127,7 +121,7 @@ export const storeTokens = (tokens: IAuthTokens, deviceId: string): void => {
 };
 
 /**
- * Securely retrieves and decrypts stored authentication tokens
+ * Securely retrieves stored authentication tokens
  * @param deviceId - Device identifier for binding verification
  * @returns Decrypted tokens or null if invalid/not found
  */
@@ -137,37 +131,34 @@ export const getStoredTokens = (deviceId: string): IAuthTokens | null => {
       return null;
     }
 
-    // Retrieve encrypted data
-    const encryptedData = localStorage.getItem(tokenConfig.storageKey);
-    if (!encryptedData) {
+    // Retrieve stored data
+    const storedData = localStorage.getItem(tokenConfig.storageKey);
+    if (!storedData) {
       return null;
     }
 
-    // Decrypt token data
-    const decryptedBytes = CryptoJS.AES.decrypt(
-      encryptedData,
-      tokenConfig.encryptionKey
-    );
-    const decryptedData = JSON.parse(decryptedBytes.toString(CryptoJS.enc.Utf8));
+    const tokenData = JSON.parse(storedData);
 
     // Verify device binding
-    if (decryptedData.deviceId !== deviceId) {
+    if (tokenData.deviceBinding !== deviceId) {
       console.warn('Device binding verification failed');
       clearTokens(deviceId);
       return null;
     }
 
     // Validate token structure
-    if (!decryptedData.accessToken || !decryptedData.refreshToken) {
+    if (!tokenData.accessToken || !tokenData.refreshToken) {
       clearTokens(deviceId);
       return null;
     }
 
     return {
-      accessToken: decryptedData.accessToken,
-      refreshToken: decryptedData.refreshToken,
-      expiresIn: decryptedData.expiresIn,
-      deviceId: decryptedData.deviceId
+      accessToken: tokenData.accessToken,
+      refreshToken: tokenData.refreshToken,
+      idToken: tokenData.idToken,
+      expiresIn: tokenData.expiresIn,
+      tokenType: tokenData.tokenType,
+      scope: tokenData.scope
     };
   } catch (error) {
     console.error('Error retrieving tokens:', error);

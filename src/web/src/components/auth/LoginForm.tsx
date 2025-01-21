@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import FingerprintJS from '@fingerprintjs/fingerprintjs-pro';
-import { SecurityLogger } from '@myelixir/security-logger';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../common/Button';
 import { AuthError, MFAMethod, AuthStatus } from '../../types/auth.types';
@@ -55,7 +54,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [lockoutEnd, setLockoutEnd] = useState<number | null>(null);
 
   const { login, verifyMFA } = useAuth();
-  const securityLogger = new SecurityLogger();
 
   const {
     register,
@@ -63,20 +61,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     formState: { errors },
     reset
   } = useForm<ILoginCredentials>({
-    resolver: yup.resolver(loginSchema)
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false
+    }
   });
 
   // Initialize device fingerprinting
   useEffect(() => {
     const initFingerprint = async () => {
       try {
-        const fp = await FingerprintJS.load({
-          apiKey: process.env.REACT_APP_FINGERPRINT_API_KEY
-        });
-        const result = await fp.get();
-        setDeviceFingerprint(result.visitorId);
+        if (process.env.REACT_APP_FINGERPRINT_API_KEY) {
+          const fp = await FingerprintJS.load({
+            apiKey: process.env.REACT_APP_FINGERPRINT_API_KEY
+          });
+          const result = await fp.get();
+          setDeviceFingerprint(result.visitorId);
+        }
       } catch (error) {
-        securityLogger.error('Fingerprint initialization failed', { error });
+        console.error('Fingerprint initialization failed:', error);
       }
     };
     initFingerprint();
@@ -103,12 +107,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         timestamp: Date.now()
       });
 
-      const response = await login({
-        ...credentials,
-        deviceFingerprint
-      });
+      const response = await login(credentials);
 
-      if (response.status === AuthStatus.MFA_REQUIRED) {
+      if (response && response.requiresMFA) {
         setMfaRequired(true);
         onSecurityEvent({
           type: 'MFA_REQUIRED',
@@ -124,7 +125,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         });
         reset();
       }
-    } catch (error) {
+    } catch (err) {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
 
@@ -139,7 +140,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         type: 'LOGIN_FAILURE',
         details: { 
           email: credentials.email, 
-          error: error.message,
+          error: err instanceof Error ? err.message : 'Unknown error',
           attemptCount: newAttemptCount
         },
         timestamp: Date.now()
@@ -149,7 +150,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
-  const handleMFASubmit = async (code: string, method: MFAMethod) => {
+  const handleMFASubmit = async (code: string) => {
     try {
       setIsLoading(true);
       await verifyMFA(code);
@@ -255,7 +256,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <Button
               key={method}
               variant="secondary"
-              onClick={() => handleMFASubmit('', method)}
+              onClick={() => handleMFASubmit('')}
               disabled={isLoading}
               ariaLabel={`Verify with ${method.toLowerCase()}`}
             >

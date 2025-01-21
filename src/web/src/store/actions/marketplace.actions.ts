@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'; // ^1.9.0
 import { debounce } from 'lodash'; // ^4.17.21
-import { recordTransaction } from '@hyperledger/fabric-gateway'; // ^1.1.1
+import { Contract } from '@hyperledger/fabric-gateway'; // ^1.1.1
 import { createAuditLog } from '@myelixir/audit-service'; // ^1.0.0
 import { IDataRequest } from '../../interfaces/marketplace.interface';
 import { RequestStatus, TransactionStatus } from '../../types/marketplace.types';
@@ -74,8 +74,9 @@ export const createDataRequestAction = createAsyncThunk(
       };
 
       return dataRequest;
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -97,13 +98,12 @@ export const processTransactionAction = createAsyncThunk(
         timestamp: new Date()
       });
 
-      // Record transaction on blockchain
-      const blockchainResponse = await recordTransaction({
-        channelName: 'marketplace',
-        chaincodeName: 'data-exchange',
-        functionName: 'createTransaction',
-        args: [JSON.stringify(transaction)]
-      });
+      // Record transaction on blockchain using Contract
+      const contract = new Contract('marketplace', 'data-exchange');
+      const blockchainResponse = await contract.submitTransaction(
+        'createTransaction',
+        JSON.stringify(transaction)
+      );
 
       // Create completion audit log
       await createAuditLog({
@@ -113,7 +113,7 @@ export const processTransactionAction = createAsyncThunk(
         userId: transaction.companyId,
         details: { 
           transaction,
-          blockchainRef: blockchainResponse.transactionId
+          blockchainRef: blockchainResponse.toString('hex')
         },
         timestamp: new Date()
       });
@@ -121,10 +121,10 @@ export const processTransactionAction = createAsyncThunk(
       return {
         ...transaction,
         status: TransactionStatus.COMPLETED,
-        blockchainRef: blockchainResponse.transactionId,
+        blockchainRef: blockchainResponse.toString('hex'),
         completedAt: new Date()
       };
-    } catch (error) {
+    } catch (error: unknown) {
       // Create error audit log
       await createAuditLog({
         action: 'PROCESS_TRANSACTION_FAILED',
@@ -133,12 +133,13 @@ export const processTransactionAction = createAsyncThunk(
         userId: transaction.companyId,
         details: { 
           transaction,
-          error: error.message
+          error: error instanceof Error ? error.message : 'An unknown error occurred'
         },
         timestamp: new Date()
       });
 
-      return rejectWithValue(error.message);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -167,8 +168,9 @@ export const auditLogAction = createAsyncThunk(
         id: result.id,
         createdAt: new Date()
       };
-    } catch (error) {
-      return rejectWithValue(error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return rejectWithValue(errorMessage);
     }
   }
 );

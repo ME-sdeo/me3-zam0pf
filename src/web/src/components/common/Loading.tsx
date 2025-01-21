@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
-import { colors } from '../../config/theme.config';
+import { lightTheme } from '../../styles/themes';
 
 /**
  * Props interface for the Loading component
@@ -20,13 +20,13 @@ interface LoadingProps {
 /**
  * Utility function to convert size prop to pixel values
  */
-const getSizeValue = (size: string = 'medium'): string => {
+const getSizeValue = (size: 'small' | 'medium' | 'large' = 'medium'): string => {
   const sizes = {
     small: '24px',
     medium: '40px',
     large: '56px'
   };
-  return sizes[size] || sizes.medium;
+  return sizes[size];
 };
 
 /**
@@ -60,10 +60,10 @@ const SpinnerContainer = styled.div<{ overlay?: boolean }>`
 /**
  * Styled spinner component with theme integration
  */
-const Spinner = styled.div<{ size?: string; color?: string }>`
+const Spinner = styled.div<{ size?: 'small' | 'medium' | 'large'; color?: string }>`
   width: ${props => getSizeValue(props.size)};
   height: ${props => getSizeValue(props.size)};
-  border: 2px solid ${props => props.color || colors.primary.main};
+  border: 2px solid ${props => props.color || lightTheme.colors.primary.main};
   border-top-color: transparent;
   border-radius: 50%;
   animation: ${spinAnimation} 0.8s linear infinite;

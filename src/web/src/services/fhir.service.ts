@@ -1,16 +1,12 @@
 import { MedplumClient } from '@medplum/core'; // @medplum/core ^2.0.0
-import { Resource } from '@medplum/fhirtypes'; // @medplum/fhirtypes ^2.0.0
 import { 
   IFHIRResource, 
   IFHIRValidationResult,
-  IFHIRSearchFilter,
-  IFHIRSearchParams,
-  FHIRValidationErrorType,
-  ValidationSeverity
+  IFHIRSearchParams
 } from '../interfaces/fhir.interface';
 import { validateFHIRResource, formatFHIRResource } from '../utils/fhir.util';
 import { fhirConfig } from '../config/fhir.config';
-import { ApiService } from './api.service';
+import ApiService from './api.service';
 
 // Constants for FHIR service configuration
 const VALIDATION_TIMEOUT = 30000;
@@ -25,18 +21,18 @@ const BATCH_SIZE = 100;
  */
 export class FHIRService {
   private readonly client: MedplumClient;
-  private readonly apiService: ApiService;
   private readonly resourceCache: Map<string, { data: IFHIRResource; timestamp: number }>;
-  private readonly auditLogger: any;
+  private readonly auditLogger: { info: (message: string, meta: any) => void; error: (message: string, meta: any) => void; };
+  private readonly apiService: ApiService;
 
-  constructor(apiService: ApiService) {
+  constructor(apiService?: ApiService) {
+    this.apiService = apiService || new ApiService();
     this.client = new MedplumClient({
       baseUrl: fhirConfig.client.baseUrl,
       clientId: fhirConfig.client.clientId,
       fetch: this.secureFetch.bind(this)
     });
 
-    this.apiService = apiService;
     this.resourceCache = new Map();
     this.initializeAuditLogger();
   }
@@ -63,7 +59,7 @@ export class FHIRService {
 
       // Upload resource with retry mechanism
       const response = await this.retryOperation(async () => {
-        const result = await this.client.createResource(formattedResource);
+        const result = await this.client.createResource(formattedResource as any);
         return result as IFHIRResource;
       });
 
@@ -99,7 +95,7 @@ export class FHIRService {
 
       // Fetch resource with retry mechanism
       const response = await this.retryOperation(async () => {
-        const result = await this.client.readResource(resourceType, id);
+        const result = await this.client.readResource(resourceType as any, id);
         return result as IFHIRResource;
       });
 
@@ -135,10 +131,11 @@ export class FHIRService {
       while (true) {
         const searchParams = this.buildSearchParams(params, page);
         const response = await this.retryOperation(async () => {
-          return await this.client.search(params.resourceType, searchParams);
+          return await this.client.search(params.resourceType as any, searchParams);
         });
 
-        results.push(...(response.entry?.map(e => e.resource) || []));
+        const resources = response.entry?.map(e => e.resource as IFHIRResource).filter(Boolean) || [];
+        results.push(...resources);
 
         if (!response.link?.find(l => l.relation === 'next') || 
             results.length >= MAX_SEARCH_RESULTS) {
@@ -198,7 +195,7 @@ export class FHIRService {
    * Initializes HIPAA-compliant audit logger
    */
   private initializeAuditLogger(): void {
-    this.auditLogger = {
+    const logger = {
       info: (message: string, meta: any) => {
         console.info(`[FHIR Audit] ${message}`, {
           timestamp: new Date().toISOString(),
@@ -212,6 +209,11 @@ export class FHIRService {
         });
       }
     };
+    Object.defineProperty(this, 'auditLogger', {
+      value: logger,
+      writable: false,
+      configurable: false
+    });
   }
 
   /**
@@ -240,7 +242,7 @@ export class FHIRService {
    * Validates search parameters for compliance
    */
   private validateSearchParams(params: IFHIRSearchParams): void {
-    if (!params.resourceType || !fhirConfig.resourceTypes[params.resourceType]) {
+    if (!params.resourceType || !Object.values(fhirConfig.resourceTypes).includes(params.resourceType)) {
       throw new Error('Invalid resource type');
     }
     if (params.pagination?._count && params.pagination._count > MAX_SEARCH_RESULTS) {

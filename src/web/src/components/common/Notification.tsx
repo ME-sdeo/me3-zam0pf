@@ -52,8 +52,8 @@ const Notification: React.FC<NotificationProps> = memo(({
 }) => {
   const {
     markAsRead,
-    removeNotification,
-    verifyBlockchainTransaction
+    deleteNotification,
+    notifications
   } = useNotification();
 
   // Handle notification read status
@@ -88,7 +88,7 @@ const Notification: React.FC<NotificationProps> = memo(({
   // Handle notification dismissal
   const handleDismiss = useCallback(async () => {
     try {
-      await removeNotification(id);
+      await deleteNotification(id);
       onDismiss?.(id);
 
       // HIPAA Audit Logging
@@ -112,23 +112,24 @@ const Notification: React.FC<NotificationProps> = memo(({
         error
       });
     }
-  }, [id, type, blockchainRef, removeNotification, onDismiss]);
+  }, [id, type, blockchainRef, deleteNotification, onDismiss]);
 
   // Verify blockchain transaction if reference exists
   useEffect(() => {
     if (blockchainRef && type === NotificationType.BLOCKCHAIN_TRANSACTION) {
-      verifyBlockchainTransaction(blockchainRef).catch(error => {
-        console.error('Error verifying blockchain transaction:', error);
+      const notification = notifications.find(n => n.id === id);
+      if (notification) {
+        console.error('Error verifying blockchain transaction:', notification.error);
         auditLog({
           action: 'BLOCKCHAIN_VERIFICATION',
           resourceId: blockchainRef,
           resourceType: 'TRANSACTION',
           status: 'ERROR',
-          error
+          error: notification.error
         });
-      });
+      }
     }
-  }, [blockchainRef, type, verifyBlockchainTransaction]);
+  }, [blockchainRef, type, id, notifications]);
 
   // Notification styling based on priority and type
   const notificationClasses = classNames(
@@ -145,7 +146,7 @@ const Notification: React.FC<NotificationProps> = memo(({
   const ariaAttributes = {
     role: 'alert',
     'aria-live': priority === NotificationPriority.URGENT ? 'assertive' : 'polite',
-    'aria-atomic': 'true',
+    'aria-atomic': true,
     'aria-labelledby': `notification-${id}-title`,
     'aria-describedby': `notification-${id}-message`
   };

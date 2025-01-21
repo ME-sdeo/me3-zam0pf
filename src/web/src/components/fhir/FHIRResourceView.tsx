@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, Typography, CircularProgress, Alert, Tooltip, IconButton } from '@mui/material';
 import { CheckCircle, Error, Refresh } from '@mui/icons-material';
-import { IFHIRResource, IFHIRValidationResult } from '../../interfaces/fhir.interface';
+import { IFHIRResource, IFHIRValidationResult, FHIRSummaryType } from '../../interfaces/fhir.interface';
 import { formatFHIRResource } from '../../utils/fhir.util';
 import { useFHIR } from '../../hooks/useFHIR';
 
@@ -41,7 +41,7 @@ const styles = {
   },
   resourceContent: {
     marginTop: '8px',
-    position: 'relative'
+    position: 'relative' as const
   },
   errorAlert: {
     marginBottom: '16px',
@@ -55,7 +55,7 @@ const styles = {
     alignItems: 'center'
   },
   validationIndicator: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: '8px',
     right: '8px'
   }
@@ -92,11 +92,11 @@ const FHIRResourceView: React.FC<FHIRResourceViewProps> = memo(({
   // Memoized resource search parameters
   const searchParams = useMemo(() => ({
     resourceType,
-    filters: [{ field: 'id', operator: 'eq', value: resourceId }],
+    filters: [{ field: 'id', operator: 'eq' as const, value: resourceId }],
     pagination: { _count: 1 },
     includes: [],
     sort: [],
-    summary: 'false'
+    summary: FHIRSummaryType.False
   }), [resourceId, resourceType]);
 
   // Memoized current resource

@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'; // ^4.4.0
-import react from '@vitejs/plugin-react'; // ^4.0.0
-import tsconfigPaths from 'vite-tsconfig-paths'; // ^4.2.0
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
 
 // Vite configuration for MyElixir healthcare data marketplace frontend
@@ -8,7 +8,6 @@ export default defineConfig({
   plugins: [
     // React plugin with healthcare-optimized settings
     react({
-      fastRefresh: true,
       jsxRuntime: 'automatic',
       babel: {
         plugins: [
@@ -28,7 +27,6 @@ export default defineConfig({
     port: 3000,
     host: true,
     https: {
-      enabled: true,
       cert: './certs/localhost.crt',
       key: './certs/localhost.key'
     },

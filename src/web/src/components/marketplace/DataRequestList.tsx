@@ -82,8 +82,8 @@ export const DataRequestList: React.FC<DataRequestListProps> = ({
         <Box>
           {value.resourceTypes.map((type) => (
             <Chip
-              key={type}
-              label={type}
+              key={type.toString()}
+              label={type.toString()}
               size="small"
               sx={{ mr: 0.5, mb: 0.5 }}
             />
@@ -133,7 +133,7 @@ export const DataRequestList: React.FC<DataRequestListProps> = ({
         return;
       }
 
-      const response = await MarketplaceService.listRequests({
+      const response = await MarketplaceService.prototype.listRequests({
         ...filters,
         page: 1,
         limit: pageSize
@@ -172,7 +172,7 @@ export const DataRequestList: React.FC<DataRequestListProps> = ({
     let subscription: any;
 
     if (enableRealtime) {
-      subscription = MarketplaceService.subscribeToUpdates(handleRealTimeUpdate);
+      subscription = MarketplaceService.prototype.subscribeToUpdates(handleRealTimeUpdate);
     }
 
     return () => {
@@ -238,8 +238,8 @@ export const DataRequestList: React.FC<DataRequestListProps> = ({
           pagination
           pageSize={pageSize}
           virtualScroll={requests.length > 100}
-          onSort={(field, direction) => {
-            // Handle sorting
+          onSort={() => {
+            // Implement sorting logic here
           }}
           onRowSelect={onRequestSelect}
         />

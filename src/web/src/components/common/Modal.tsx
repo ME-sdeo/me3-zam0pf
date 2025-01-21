@@ -110,7 +110,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <Portal>
-      <Fade in={isOpen} timeout={themeConfig.transitions.duration.standard}>
+      <Fade in={isOpen} timeout={parseInt(themeConfig.transitionDuration.replace('s', '')) * 1000}>
         <div
           className={`modal ${className}`}
           role="dialog"

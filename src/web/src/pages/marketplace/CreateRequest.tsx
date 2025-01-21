@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Grid, Alert } from '@mui/material';
-import { useBlockchain } from '@hyperledger/fabric-gateway';
 
 // Internal components
 import DataRequestForm from '../../components/marketplace/DataRequestForm';
@@ -21,10 +20,9 @@ const CreateRequest: React.FC = () => {
   // Navigation and state management
   const navigate = useNavigate();
   const { createRequest, calculatePrice } = useMarketplace();
-  const blockchainClient = useBlockchain();
 
   // Component state
-  const [request, setRequest] = useState<Partial<IDataRequest>>({
+  const [request] = useState<Partial<IDataRequest>>({
     status: RequestStatus.DRAFT,
     filterCriteria: {
       resourceTypes: [],
@@ -38,93 +36,59 @@ const CreateRequest: React.FC = () => {
       dateRange: {
         startDate: new Date(),
         endDate: new Date()
-      }
+      },
+      excludedFields: [],
+      requiredFields: [],
+      customFilters: {}
     }
   });
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [blockchainStatus, setBlockchainStatus] = useState<{
     transactionId: string | null;
-    status: 'pending' | 'confirmed' | 'failed';
+    status: 'pending' | 'failed' | 'confirmed';
   }>({ transactionId: null, status: 'pending' });
-
-  // Price calculation state
-  const [priceEstimate, setPriceEstimate] = useState<{
-    totalPrice: number;
-    estimatedMatches: number;
-  } | null>(null);
 
   /**
    * Handles form submission with HIPAA compliance validation
    */
   const handleSubmit = useCallback(async (formData: IDataRequest) => {
-    setLoading(true);
     setError(null);
 
     try {
-      // Calculate final price estimate
-      const pricing = await calculatePrice(formData.filterCriteria);
+      await calculatePrice(formData.filterCriteria);
       
       // Create blockchain transaction record
-      const blockchainTx = await blockchainClient.submitTransaction('createDataRequest', {
-        requestId: formData.id,
-        companyId: formData.companyId,
-        pricePerRecord: formData.pricePerRecord,
-        timestamp: new Date().toISOString()
-      });
+      const blockchainTx = await createRequest(formData);
 
       setBlockchainStatus({
-        transactionId: blockchainTx.transactionId,
+        transactionId: blockchainTx.id,
         status: 'pending'
       });
 
-      // Create request with enhanced security metadata
-      const createdRequest = await createRequest({
-        ...formData,
-        blockchainRef: blockchainTx.transactionId,
-        complianceMetadata: {
-          hipaaCompliant: true,
-          validationTimestamp: new Date().toISOString(),
-          blockchainVerified: true
-        }
-      });
-
-      // Update blockchain status
-      setBlockchainStatus({
-        transactionId: blockchainTx.transactionId,
-        status: 'confirmed'
-      });
-
       // Navigate to request details
-      navigate(`/marketplace/requests/${createdRequest.id}`);
+      navigate(`/marketplace/requests/${blockchainTx.id}`);
     } catch (err) {
       console.error('Error creating request:', err);
-      setError(err.message || 'Failed to create request. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create request. Please try again.';
+      setError(errorMessage);
       setBlockchainStatus(prev => ({
         ...prev,
         status: 'failed'
       }));
-    } finally {
-      setLoading(false);
     }
-  }, [navigate, createRequest, calculatePrice, blockchainClient]);
+  }, [navigate, createRequest, calculatePrice]);
 
   /**
    * Handles price updates with blockchain validation
    */
-  const handlePriceChange = useCallback(async (
-    price: number,
-    isValid: boolean
-  ) => {
+  const handlePriceChange = useCallback(async (isValid: boolean) => {
     if (!isValid || !request.filterCriteria) return;
 
     try {
-      const estimate = await calculatePrice(request.filterCriteria);
-      setPriceEstimate(estimate);
+      await calculatePrice(request.filterCriteria);
     } catch (err) {
       console.error('Error calculating price:', err);
-      setPriceEstimate(null);
     }
   }, [request.filterCriteria, calculatePrice]);
 
@@ -145,7 +109,7 @@ const CreateRequest: React.FC = () => {
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             onBlockchainStatus={(status) => 
-              setBlockchainStatus(prev => ({ ...prev, status }))
+              setBlockchainStatus(prev => ({ ...prev, status: status as 'pending' | 'failed' | 'confirmed' }))
             }
           />
 

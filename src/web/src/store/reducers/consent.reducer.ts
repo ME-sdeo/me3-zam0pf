@@ -5,7 +5,7 @@
  */
 
 import { createReducer, PayloadAction } from '@reduxjs/toolkit';
-import { IConsent } from '../../interfaces/consent.interface';
+import { IConsent, ConsentStatus } from '../../interfaces/consent.interface';
 import { ConsentActionTypes } from '../actions/consent.actions';
 
 /**
@@ -145,7 +145,7 @@ export const consentReducer = createReducer(initialState, {
     if (consentIndex !== -1) {
       state.consents[consentIndex] = {
         ...state.consents[consentIndex],
-        status: 'REVOKED'
+        status: ConsentStatus.REVOKED
       };
     }
     state.lastUpdated = new Date();
@@ -169,7 +169,7 @@ export const consentReducer = createReducer(initialState, {
     });
   },
 
-  [ConsentActionTypes.VERIFY_BLOCKCHAIN_STATUS]: (state, action: PayloadAction<{ status: 'OPERATIONAL' | 'DEGRADED' | 'FAILED', errors?: string[] }>) => {
+  [ConsentActionTypes.VERIFY_BLOCKCHAIN_SUCCESS]: (state, action: PayloadAction<{ status: 'OPERATIONAL' | 'DEGRADED' | 'FAILED', errors?: string[] }>) => {
     state.statusMonitoring = {
       lastCheck: new Date(),
       status: action.payload.status,

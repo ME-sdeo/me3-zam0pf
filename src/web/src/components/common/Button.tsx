@@ -1,16 +1,9 @@
 import React from 'react'; // ^18.0.0
 import classNames from 'classnames'; // ^2.3.2
-import {
-  button,
-  'button--primary': buttonPrimary,
-  'button--secondary': buttonSecondary,
-  'button--outline': buttonOutline,
-  'button--critical': buttonCritical,
-  'button--consent-required': buttonConsentRequired
-} from '../../styles/components/_button.scss';
+import styles from '../../styles/components/_button.scss';
 
 // Type definitions for button props
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'critical' | 'consent-required';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'critical' | 'consent-required' | 'text';
 type ButtonType = 'button' | 'submit' | 'reset';
 
 interface ButtonProps {
@@ -29,7 +22,7 @@ interface ButtonProps {
   confirmationRequired?: boolean;
 }
 
-const getButtonClasses = (props: ButtonProps): string => {
+const getButtonClasses = (props: Omit<ButtonProps, 'children'>): string => {
   const {
     variant = 'primary',
     fullWidth,
@@ -42,13 +35,13 @@ const getButtonClasses = (props: ButtonProps): string => {
   } = props;
 
   return classNames(
-    button,
+    styles.button,
     {
-      [buttonPrimary]: variant === 'primary',
-      [buttonSecondary]: variant === 'secondary',
-      [buttonOutline]: variant === 'outline',
-      [buttonCritical]: variant === 'critical',
-      [buttonConsentRequired]: variant === 'consent-required' || requiresConsent,
+      [styles.buttonPrimary]: variant === 'primary',
+      [styles.buttonSecondary]: variant === 'secondary',
+      [styles.buttonOutline]: variant === 'outline',
+      [styles.buttonCritical]: variant === 'critical',
+      [styles.buttonConsentRequired]: variant === 'consent-required' || requiresConsent,
       'button--full-width': fullWidth,
       'button--disabled': disabled,
       'button--loading': loading,
@@ -109,7 +102,6 @@ export const Button: React.FC<ButtonProps> = ({
       data-transaction-pending={transactionPending}
       data-medical-environment={medicalEnvironment}
       style={{
-        // Enhanced touch target size for medical environments
         minHeight: medicalEnvironment ? '48px' : undefined,
         minWidth: medicalEnvironment ? '48px' : undefined,
       }}

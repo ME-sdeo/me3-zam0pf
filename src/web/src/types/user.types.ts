@@ -1,4 +1,3 @@
-import { AccountInfo } from '@azure/msal-browser'; // @azure/msal-browser ^2.32.0
 import { UserRole } from '../types/auth.types';
 
 /**

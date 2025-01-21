@@ -10,11 +10,9 @@ import {
 } from '@mui/icons-material';
 import { Button } from '../common/Button';
 import { Dropdown } from '../common/Dropdown';
-import { Notification } from '../common/Notification';
 import { useAuth } from '../../hooks/useAuth';
-import { useWebSocket } from 'react-use-websocket';
-import { NotificationType, NotificationPriority } from '../common/Notification';
-import { UserRole, AuthStatus } from '../../types/auth.types';
+import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
+import { UserRole } from '../../types/auth.types';
 
 interface HeaderProps {
   onThemeChange?: () => void;
@@ -29,7 +27,6 @@ interface SecurityAlert {
 
 const Header: React.FC<HeaderProps> = ({ onThemeChange, onSecurityAlert }) => {
   // State management
-  const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
   const [blockchainStatus, setBlockchainStatus] = useState<'synced' | 'syncing' | 'error'>('synced');
@@ -156,7 +153,7 @@ const Header: React.FC<HeaderProps> = ({ onThemeChange, onSecurityAlert }) => {
           {isAuthenticated && (
             <nav className="header__nav" role="navigation">
               <Button
-                variant="text"
+                variant="primary"
                 onClick={() => navigate('/dashboard')}
                 aria-label="Dashboard"
               >
@@ -164,7 +161,7 @@ const Header: React.FC<HeaderProps> = ({ onThemeChange, onSecurityAlert }) => {
               </Button>
               {user?.role === UserRole.CONSUMER && (
                 <Button
-                  variant="text"
+                  variant="primary"
                   onClick={() => navigate('/my-data')}
                   aria-label="My Health Data"
                 >
@@ -173,7 +170,7 @@ const Header: React.FC<HeaderProps> = ({ onThemeChange, onSecurityAlert }) => {
               )}
               {user?.role === UserRole.COMPANY && (
                 <Button
-                  variant="text"
+                  variant="primary"
                   onClick={() => navigate('/marketplace')}
                   aria-label="Data Marketplace"
                 >

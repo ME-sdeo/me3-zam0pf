@@ -7,7 +7,6 @@
 
 import { z } from 'zod'; // ^3.22.0
 import { Resource } from '@medplum/fhirtypes'; // ^2.0.0
-import { TextField } from '@mui/material'; // ^5.14.0
 import { 
   USER_VALIDATION,
   FHIR_VALIDATION,
@@ -125,7 +124,7 @@ export const validateFHIRResource = async (
 
   try {
     // Validate resource type
-    if (!FHIR_VALIDATION.RESOURCE_TYPES.includes(resource.resourceType)) {
+    if (!FHIR_VALIDATION.RESOURCE_TYPES.includes(resource.resourceType as any)) {
       errors.push({
         type: FHIRValidationErrorType.Value,
         field: 'resourceType',
@@ -139,10 +138,10 @@ export const validateFHIRResource = async (
     }
 
     // Validate required fields
-    const requiredFields = FHIR_VALIDATION.REQUIRED_FIELDS[resource.resourceType];
+    const requiredFields = FHIR_VALIDATION.REQUIRED_FIELDS[resource.resourceType as keyof typeof FHIR_VALIDATION.REQUIRED_FIELDS];
     if (requiredFields) {
       for (const field of requiredFields) {
-        if (!resource[field]) {
+        if (!(field in resource)) {
           errors.push({
             type: FHIRValidationErrorType.Required,
             field,
@@ -157,7 +156,7 @@ export const validateFHIRResource = async (
     }
 
     // Validate against JSON schema
-    const schema = FHIR_VALIDATION.VALIDATION_SCHEMAS[resource.resourceType];
+    const schema = FHIR_VALIDATION.VALIDATION_SCHEMAS[resource.resourceType as keyof typeof FHIR_VALIDATION.VALIDATION_SCHEMAS];
     if (schema) {
       const zodSchema = z.object(schema);
       try {
@@ -171,7 +170,7 @@ export const validateFHIRResource = async (
               message: err.message,
               code: 'SCHEMA_VALIDATION_ERROR',
               severity: ValidationSeverity.Error,
-              path: err.path,
+              path: err.path.map(String),
               context: { zodError: err }
             });
           });
@@ -179,13 +178,14 @@ export const validateFHIRResource = async (
       }
     }
 
-    // Check file size if resource contains binary data
-    if (resource.data) {
-      const size = new Blob([resource.data]).size;
+    // Check file size if resource contains binary content
+    const resourceWithBinary = resource as any;
+    if (resourceWithBinary.content?.data) {
+      const size = new Blob([resourceWithBinary.content.data]).size;
       if (size > FHIR_VALIDATION.MAX_RESOURCE_SIZE) {
         warnings.push({
           message: FORM_VALIDATION_MESSAGES.FILE_TOO_LARGE,
-          field: 'data',
+          field: 'content.data',
           code: 'FILE_SIZE_WARNING',
           suggestion: 'Consider splitting large resources'
         });

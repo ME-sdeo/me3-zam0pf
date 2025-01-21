@@ -5,10 +5,7 @@ import {
   IPaymentMethod, 
   IPaymentAmount, 
   IPaymentTransaction,
-  PaymentMethodType,
   PaymentCurrency,
-  MIN_PAYMENT_AMOUNT,
-  MAX_PAYMENT_AMOUNT,
   isValidPaymentMethod,
   isValidPaymentAmount
 } from '../interfaces/payment.interface';
@@ -132,7 +129,7 @@ export class PaymentService {
 
       // Verify blockchain transaction
       const blockchainVerification = await this.blockchainService.verifyTransaction({
-        ref: paymentIntent.metadata.blockchainRef,
+        ref: (paymentIntent as any).metadata?.blockchainRef,
         data: blockchainData
       });
 
@@ -146,6 +143,7 @@ export class PaymentService {
       // Create transaction record
       const transaction: IPaymentTransaction = {
         transactionId: confirmedPayment.id,
+        requestId: (paymentIntent as any).metadata?.requestId || '',
         amount: {
           value: confirmedPayment.amount / 100, // Convert from cents
           currency: confirmedPayment.currency as PaymentCurrency,
@@ -153,10 +151,17 @@ export class PaymentService {
           exchangeRateTimestamp: new Date(),
           isRefundable: true
         },
+        paymentMethod: (paymentIntent as any).metadata?.paymentMethod,
         status: TransactionStatus.COMPLETED,
         blockchainRef: blockchainVerification.ref,
         blockchainTxHash: blockchainVerification.txHash,
-        complianceMetadata: paymentIntent.metadata,
+        metadata: {
+          requestType: (paymentIntent as any).metadata?.requestType || '',
+          dataProvider: (paymentIntent as any).metadata?.dataProvider || '',
+          dataConsumer: (paymentIntent as any).metadata?.dataConsumer || '',
+          recordCount: (paymentIntent as any).metadata?.recordCount || 0,
+          consentId: (paymentIntent as any).metadata?.consentId || ''
+        },
         createdAt: new Date(confirmedPayment.created * 1000),
         updatedAt: new Date()
       };

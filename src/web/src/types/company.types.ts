@@ -7,7 +7,7 @@
 /**
  * Enum defining types of healthcare companies in the marketplace
  */
-export enum CompanyType {
+export enum CompanyTypeEnum {
     RESEARCH_INSTITUTION = 'RESEARCH_INSTITUTION',
     PHARMACEUTICAL = 'PHARMACEUTICAL',
     BIOTECH = 'BIOTECH',
@@ -106,11 +106,11 @@ export type CompanyBillingType = {
 /**
  * Main type definition for company data structure
  */
-export type CompanyType = {
+export type Company = {
     id: string;
     name: string;
     email: string;
-    type: CompanyType;
+    type: CompanyTypeEnum;
     status: CompanyStatus;
     verificationStatus: VerificationStatus;
     profile: CompanyProfileType;

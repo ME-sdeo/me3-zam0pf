@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'; // ^8.0.0
 import { debounce } from 'lodash'; // ^4.17.21
 import NotificationService from '../services/notification.service';
 import * as NotificationActions from '../store/actions/notification.actions';
+import { AppDispatch } from '../store/store.types';
 
 /**
  * Interface for notification state
@@ -15,7 +16,7 @@ interface NotificationState {
   page: number;
   hasMore: boolean;
   connectionStatus: 'connected' | 'disconnected' | 'error';
-  preferences: NotificationPreferences;
+  preferences: Record<string, boolean>;
 }
 
 /**
@@ -27,11 +28,11 @@ interface NotificationHookReturn {
   error: Error | null;
   hasMore: boolean;
   connectionStatus: NotificationState['connectionStatus'];
-  preferences: NotificationPreferences;
+  preferences: Record<string, boolean>;
   fetchMore: (page: number) => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
-  updatePreferences: (preferences: NotificationPreferences) => Promise<void>;
+  updatePreferences: (preferences: Record<string, boolean>) => Promise<void>;
   markAllAsRead: () => Promise<void>;
 }
 
@@ -39,7 +40,7 @@ interface NotificationHookReturn {
  * Custom hook for managing notifications with real-time updates and HIPAA compliance
  */
 export const useNotification = (): NotificationHookReturn => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const notificationService = NotificationService.getInstance();
 
   // Select notification state from Redux store
@@ -47,18 +48,16 @@ export const useNotification = (): NotificationHookReturn => {
     notifications,
     loading,
     error,
-    total,
-    page,
     hasMore,
     connectionStatus,
     preferences
-  } = useSelector((state: any) => state.notifications);
+  } = useSelector((state: { notifications: NotificationState }) => state.notifications);
 
   /**
    * Initialize WebSocket connection with secure configuration
    */
   useEffect(() => {
-    dispatch(NotificationActions.initializeWebSocket());
+    void dispatch(NotificationActions.initializeWebSocket());
 
     return () => {
       notificationService.disconnect();
@@ -72,8 +71,7 @@ export const useNotification = (): NotificationHookReturn => {
     try {
       await dispatch(NotificationActions.fetchNotifications({
         page: nextPage,
-        limit: 20,
-        forceRefresh: false
+        limit: 20
       }));
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -105,7 +103,7 @@ export const useNotification = (): NotificationHookReturn => {
   /**
    * Update notification preferences with debouncing
    */
-  const debouncedUpdatePreferences = debounce(async (newPreferences: NotificationPreferences) => {
+  const debouncedUpdatePreferences = debounce(async (newPreferences: Record<string, boolean>) => {
     try {
       await dispatch(NotificationActions.updatePreferences(newPreferences));
     } catch (error) {
@@ -113,8 +111,8 @@ export const useNotification = (): NotificationHookReturn => {
     }
   }, 500);
 
-  const updatePreferences = useCallback((newPreferences: NotificationPreferences) => {
-    debouncedUpdatePreferences(newPreferences);
+  const updatePreferences = useCallback(async (newPreferences: Record<string, boolean>) => {
+    await debouncedUpdatePreferences(newPreferences);
   }, [debouncedUpdatePreferences]);
 
   /**
@@ -122,8 +120,8 @@ export const useNotification = (): NotificationHookReturn => {
    */
   const markAllAsRead = useCallback(async () => {
     try {
-      const unreadNotifications = notifications.filter(n => !n.read);
-      const batchPromises = unreadNotifications.map(n => 
+      const unreadNotifications = notifications.filter((n: Notification) => !n.read);
+      const batchPromises = unreadNotifications.map((n: Notification) => 
         dispatch(NotificationActions.markAsRead(n.id))
       );
       await Promise.all(batchPromises);

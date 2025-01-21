@@ -52,10 +52,5 @@
     "**/*.test.tsx",
     "src/**/__tests__/**",
     "tests/**"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
   ]
 }

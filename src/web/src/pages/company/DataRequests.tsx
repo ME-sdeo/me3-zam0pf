@@ -31,13 +31,10 @@ const DataRequests: React.FC = () => {
 
   // Initialize marketplace hook with blockchain support
   const {
-    requests,
-    loading,
     error,
     complianceStatus,
     createRequest,
-    loadRequests,
-    blockchainStatus: chainStatus
+    loadRequests
   } = useMarketplace();
 
   // Load initial requests
@@ -68,11 +65,6 @@ const DataRequests: React.FC = () => {
   const handleRequestSelect = useCallback((request: IDataRequest) => {
     setSelectedRequest(request);
     setIsEditModalOpen(true);
-  }, []);
-
-  // Handle blockchain status updates
-  const handleBlockchainUpdate = useCallback((status: string) => {
-    setBlockchainStatus(status);
   }, []);
 
   // Handle request status changes
@@ -150,7 +142,6 @@ const DataRequests: React.FC = () => {
         <DataRequestList
           onRequestSelect={handleRequestSelect}
           onStatusChange={handleStatusChange}
-          onBlockchainUpdate={handleBlockchainUpdate}
           enableRealtime={true}
         />
 
@@ -159,7 +150,7 @@ const DataRequests: React.FC = () => {
           <DataRequestForm
             onSubmit={handleCreateRequest}
             onCancel={() => setIsCreateModalOpen(false)}
-            onBlockchainStatus={handleBlockchainUpdate}
+            onBlockchainStatus={setBlockchainStatus}
           />
         )}
 
@@ -169,7 +160,7 @@ const DataRequests: React.FC = () => {
             initialData={selectedRequest}
             onSubmit={handleCreateRequest}
             onCancel={() => setIsEditModalOpen(false)}
-            onBlockchainStatus={handleBlockchainUpdate}
+            onBlockchainStatus={setBlockchainStatus}
           />
         )}
       </Box>

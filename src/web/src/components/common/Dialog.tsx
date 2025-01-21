@@ -92,7 +92,7 @@ export const Dialog: React.FC<DialogProps> = ({
       'dialog--high-security': securityLevel === 'high',
       'dialog--consent-required': consentRequired,
       'dialog--transaction-pending': transactionPending,
-      [styles['dialog-high-contrast']]: highContrast,
+      [styles.dialogHighContrast]: highContrast,
     },
     className
   );
@@ -100,7 +100,7 @@ export const Dialog: React.FC<DialogProps> = ({
   const content = (
     <>
       <div 
-        className={styles['dialog-overlay']} 
+        className={styles.dialogOverlay} 
         onClick={handleOverlayClick}
         data-testid={`${testId}-overlay`}
       />
@@ -114,15 +114,15 @@ export const Dialog: React.FC<DialogProps> = ({
         data-consent-required={consentRequired}
         data-transaction-pending={transactionPending}
       >
-        <div className={styles['dialog-header']}>
+        <div className={styles.dialogHeader}>
           <h2 id={`${testId}-title`}>{title}</h2>
         </div>
-        <div className={styles['dialog-content']}>
-          <div className={styles['dialog-body']}>
+        <div className={styles.dialogContent}>
+          <div className={styles.dialogBody}>
             {children}
           </div>
           {actions.length > 0 && (
-            <div className={styles['dialog-footer']}>
+            <div className={styles.dialogFooter}>
               {actions.map((action, index) => (
                 <Button
                   key={`${action.label}-${index}`}

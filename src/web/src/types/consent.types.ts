@@ -47,7 +47,7 @@ export enum ConsentEventType {
  * Interface for consent permissions at the resource level
  * Enables granular control over specific FHIR resource types
  */
-interface ResourcePermission {
+export interface ResourcePermission {
   resourceType: FHIRResourceType;
   accessLevel: ConsentAccessLevel;
   conditions?: Record<string, any>; // Additional access conditions

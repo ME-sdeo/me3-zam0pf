@@ -1,5 +1,5 @@
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit'; // ^1.9.0
-import { createLogger } from 'redux-logger'; // ^3.0.6
+import { createLogger, Logger } from 'redux-logger'; // ^3.0.6
 import rootReducer, { RootState } from './reducers/root.reducer';
 
 // Import HIPAA-compliant security middleware
@@ -65,7 +65,7 @@ export const store = configureStore({
         ? createLogger({ 
             collapsed: true,
             // Sanitize sensitive data in logs
-            sanitize: (state) => ({
+            sanitize: (state: RootState) => ({
               ...state,
               auth: {
                 ...state.auth,
@@ -85,13 +85,13 @@ export const store = configureStore({
     trace: true,
     traceLimit: 25,
     // Sanitize sensitive data in DevTools
-    actionSanitizer: (action) => {
+    actionSanitizer: (action: Action<string>) => {
       if (action.type.includes('auth/') || action.type.includes('payment/')) {
         return { ...action, payload: '[REDACTED]' };
       }
       return action;
     },
-    stateSanitizer: (state) => ({
+    stateSanitizer: (state: RootState) => ({
       ...state,
       auth: {
         ...state.auth,

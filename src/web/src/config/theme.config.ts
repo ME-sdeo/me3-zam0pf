@@ -1,4 +1,4 @@
-import { createTheme, useMediaQuery } from '@mui/material';
+import { createTheme, useMediaQuery, PaletteMode } from '@mui/material';
 import { lightTheme, darkTheme } from '../styles/themes';
 
 // Theme mode type definition
@@ -22,16 +22,15 @@ export const getSystemPreference = (): ThemeMode => {
 /**
  * Creates an accessible Material UI theme configuration
  * @param {ThemeMode} mode - Theme mode (light/dark/system)
- * @param {boolean} highContrast - High contrast mode flag
  * @returns {Theme} Material UI theme configuration
  */
-export const getThemeConfig = (mode: ThemeMode, highContrast: boolean = false) => {
+export const getThemeConfig = (mode: ThemeMode) => {
   const effectiveMode = mode === 'system' ? getSystemPreference() : mode;
   const themeSource = effectiveMode === 'dark' ? darkTheme : lightTheme;
 
   return createTheme({
     palette: {
-      mode: effectiveMode,
+      mode: effectiveMode as PaletteMode,
       primary: {
         main: themeSource.colors.primary.main,
         light: themeSource.colors.primary.light,
@@ -124,14 +123,6 @@ export const getThemeConfig = (mode: ThemeMode, highContrast: boolean = false) =
             '&:hover': {
               boxShadow: 'none',
             },
-          },
-        },
-      },
-      MuiFocusRing: {
-        styleOverrides: {
-          root: {
-            outline: `3px solid ${themeSource.accessibility.focusRing[effectiveMode]}`,
-            outlineOffset: '2px',
           },
         },
       },

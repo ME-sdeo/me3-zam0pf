@@ -1,18 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'; // react ^18.0.0
 import { Logger } from '@azure/logger'; // @azure/logger ^1.0.0
-import { BlockchainClient } from '@hyperledger/fabric-gateway'; // @hyperledger/fabric-gateway ^1.1.0
 import { io } from 'socket.io-client'; // socket.io-client ^4.0.0
 
 import { IDataRequest, IDataMatch } from '../interfaces/marketplace.interface';
 import marketplaceService from '../services/marketplace.service';
-import { RequestStatus, MatchStatus } from '../types/marketplace.types';
 import { API_ENDPOINTS } from '../constants/api.constants';
 
 // Constants for marketplace operations
 const MIN_MATCH_SCORE = 0.7;
 const MIN_PRICE_PER_RECORD = 0.1;
 const MAX_RETRY_ATTEMPTS = 3;
-const CACHE_DURATION_MS = 300000; // 5 minutes
 const WEBSOCKET_RECONNECT_MS = 5000;
 
 /**
@@ -35,9 +32,8 @@ export const useMarketplace = (initialFilters?: Partial<IDataRequest['filterCrit
     validationErrors: [] as string[]
   });
 
-  // Initialize logger and blockchain client
+  // Initialize logger
   const logger = new Logger('MarketplaceHook');
-  const blockchainClient = new BlockchainClient();
 
   /**
    * Creates a new HIPAA-compliant data request
@@ -46,7 +42,7 @@ export const useMarketplace = (initialFilters?: Partial<IDataRequest['filterCrit
     setLoading(true);
     try {
       // Validate HIPAA compliance
-      const validationResult = await marketplaceService.validateHIPAACompliance(request);
+      const validationResult = await marketplaceService.validateRequest(request);
       if (!validationResult.isValid) {
         setComplianceStatus(prev => ({
           ...prev,
@@ -111,7 +107,7 @@ export const useMarketplace = (initialFilters?: Partial<IDataRequest['filterCrit
       const matches = await marketplaceService.findMatches(requestId);
       
       // Filter matches based on minimum score
-      const validMatches = matches.filter(match => match.score >= MIN_MATCH_SCORE);
+      const validMatches = matches.filter((match: IDataMatch) => match.score >= MIN_MATCH_SCORE);
       
       setMatches(validMatches);
       return validMatches;

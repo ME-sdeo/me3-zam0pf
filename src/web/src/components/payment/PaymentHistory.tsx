@@ -83,8 +83,7 @@ const PaymentHistory: React.FC<PaymentHistoryProps> = ({
     await getPaymentHistory(
       'current-user-id',
       1,
-      10,
-      { startDate, endDate }
+      10
     );
   }, [getPaymentHistory]);
 

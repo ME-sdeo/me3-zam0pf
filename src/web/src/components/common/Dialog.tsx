@@ -1,15 +1,7 @@
 import React, { useEffect, useCallback } from 'react'; // ^18.0.0
 import classNames from 'classnames'; // ^2.3.2
 import { createPortal } from 'react-dom'; // ^18.0.0
-import {
-  'dialog-overlay': dialogOverlay,
-  dialog,
-  'dialog-content': dialogContent,
-  'dialog-header': dialogHeader,
-  'dialog-body': dialogBody,
-  'dialog-footer': dialogFooter,
-  'dialog-high-contrast': dialogHighContrast
-} from '../../styles/components/_dialog.scss';
+import styles from '../../styles/components/_dialog.scss';
 import Button from './Button';
 
 interface DialogAction {
@@ -94,13 +86,13 @@ export const Dialog: React.FC<DialogProps> = ({
   if (!isOpen) return null;
 
   const dialogClasses = classNames(
-    dialog,
+    styles.dialog,
     `dialog--${size}`,
     {
       'dialog--high-security': securityLevel === 'high',
       'dialog--consent-required': consentRequired,
       'dialog--transaction-pending': transactionPending,
-      [dialogHighContrast]: highContrast,
+      [styles['dialog-high-contrast']]: highContrast,
     },
     className
   );
@@ -108,7 +100,7 @@ export const Dialog: React.FC<DialogProps> = ({
   const content = (
     <>
       <div 
-        className={dialogOverlay} 
+        className={styles['dialog-overlay']} 
         onClick={handleOverlayClick}
         data-testid={`${testId}-overlay`}
       />
@@ -122,15 +114,15 @@ export const Dialog: React.FC<DialogProps> = ({
         data-consent-required={consentRequired}
         data-transaction-pending={transactionPending}
       >
-        <div className={dialogHeader}>
+        <div className={styles['dialog-header']}>
           <h2 id={`${testId}-title`}>{title}</h2>
         </div>
-        <div className={dialogContent}>
-          <div className={dialogBody}>
+        <div className={styles['dialog-content']}>
+          <div className={styles['dialog-body']}>
             {children}
           </div>
           {actions.length > 0 && (
-            <div className={dialogFooter}>
+            <div className={styles['dialog-footer']}>
               {actions.map((action, index) => (
                 <Button
                   key={`${action.label}-${index}`}

@@ -1,23 +1,16 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
-import { SecurityMonitor } from '@azure/security-monitor';
+import { SecurityMetrics } from '../utils/security';
 
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import ResetPassword from '../pages/auth/ResetPassword';
 import PublicRoute from './PublicRoute';
-import { AUTH_ROUTES } from '../constants/routes.constants';
+import { PUBLIC_ROUTES } from '../constants/routes.constants';
 
 // Initialize security monitoring
-const securityMonitor = new SecurityMonitor({
-  enableAuditLogging: true,
-  rateLimit: {
-    login: 100,
-    register: 50,
-    resetPassword: 20
-  }
-});
+const securityMonitor = new SecurityMetrics();
 
 /**
  * Error fallback component for authentication routes
@@ -69,25 +62,25 @@ const AuthRoutes: React.FC = () => {
     <ErrorBoundary {...errorBoundaryConfig}>
       <Routes>
         <Route
-          path={AUTH_ROUTES.LOGIN}
+          path={PUBLIC_ROUTES.LOGIN}
           element={
-            <PublicRoute path={AUTH_ROUTES.LOGIN}>
+            <PublicRoute path={PUBLIC_ROUTES.LOGIN}>
               <Login />
             </PublicRoute>
           }
         />
         <Route
-          path={AUTH_ROUTES.REGISTER}
+          path={PUBLIC_ROUTES.REGISTER}
           element={
-            <PublicRoute path={AUTH_ROUTES.REGISTER}>
+            <PublicRoute path={PUBLIC_ROUTES.REGISTER}>
               <Register />
             </PublicRoute>
           }
         />
         <Route
-          path={AUTH_ROUTES.RESET_PASSWORD}
+          path={PUBLIC_ROUTES.RESET_PASSWORD}
           element={
-            <PublicRoute path={AUTH_ROUTES.RESET_PASSWORD}>
+            <PublicRoute path={PUBLIC_ROUTES.RESET_PASSWORD}>
               <ResetPassword />
             </PublicRoute>
           }

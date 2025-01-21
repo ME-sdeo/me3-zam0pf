@@ -40,8 +40,6 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "tests/**/*.ts",
-    "tests/**/*.tsx",
     "vite.config.ts"
   ],
   "exclude": [
@@ -49,7 +47,11 @@
     "dist",
     "coverage",
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.spec.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "src/**/__tests__/**",
+    "tests/**"
   ],
   "references": [
     {

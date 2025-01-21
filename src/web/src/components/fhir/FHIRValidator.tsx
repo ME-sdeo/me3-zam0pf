@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import CircularProgress from '@mui/material/CircularProgress'; // v5.0.0
-import { IFHIRResource, IFHIRValidationResult } from '../../interfaces/fhir.interface';
+import { IFHIRResource, IFHIRValidationResult, FHIRValidationErrorType, ValidationSeverity } from '../../interfaces/fhir.interface';
 import { validateFHIRResource } from '../../utils/fhir.util';
 import Alert from '../common/Alert';
 import { useFHIR } from '../../hooks/useFHIR';
@@ -39,7 +39,7 @@ const FHIRValidator: React.FC<FHIRValidatorProps> = ({
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Custom hook for FHIR operations
-  const { loading, error } = useFHIR({
+  const { error } = useFHIR({
     strictValidation: FHIR_VALIDATION_RULES.STRICT_MODE,
     enableMetrics: true
   });
@@ -86,8 +86,10 @@ const FHIRValidator: React.FC<FHIRValidatorProps> = ({
 
       // Cache result
       if (validationCache.current.size >= 100) {
-        const firstKey = validationCache.current.keys().next().value;
-        validationCache.current.delete(firstKey);
+        const firstKey = Array.from(validationCache.current.keys())[0];
+        if (firstKey) {
+          validationCache.current.delete(firstKey);
+        }
       }
       validationCache.current.set(cacheKey, result);
 
@@ -99,11 +101,11 @@ const FHIRValidator: React.FC<FHIRValidatorProps> = ({
       const errorResult: IFHIRValidationResult = {
         valid: false,
         errors: [{
-          type: 'Structure',
+          type: FHIRValidationErrorType.Structure,
           field: 'root',
           message: error instanceof Error ? error.message : 'Unknown validation error',
           code: 'VALIDATION_ERROR',
-          severity: 'Error',
+          severity: ValidationSeverity.Error,
           path: [],
           context: { error }
         }],

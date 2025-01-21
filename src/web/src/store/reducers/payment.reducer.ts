@@ -1,5 +1,5 @@
-import { createReducer } from '@reduxjs/toolkit'; // @reduxjs/toolkit ^1.9.5
-import { PaymentIntent } from '@stripe/stripe-js'; // @stripe/stripe-js ^1.54.0
+import { createReducer } from '@reduxjs/toolkit';
+import { PaymentIntent } from '@stripe/stripe-js';
 import { PAYMENT_ACTION_TYPES } from '../actions/payment.actions';
 import { IPaymentTransaction } from '../../interfaces/payment.interface';
 
@@ -71,18 +71,18 @@ export const paymentReducer = createReducer(INITIAL_STATE, (builder) => {
         lastVerified: new Date()
       };
     })
-    .addCase(PAYMENT_ACTION_TYPES.INITIALIZE_PAYMENT_SUCCESS, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.INITIALIZE_PAYMENT_SUCCESS, (state, { payload }) => {
       state.loadingStates.paymentInitialization = false;
-      state.currentPaymentIntent = action.payload;
+      state.currentPaymentIntent = payload;
       state.complianceStatus = {
         ...state.complianceStatus!,
         lastVerified: new Date(),
-        auditId: `SUCCESS_${action.payload.id}`
+        auditId: `SUCCESS_${payload.id}`
       };
     })
-    .addCase(PAYMENT_ACTION_TYPES.INITIALIZE_PAYMENT_FAILURE, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.INITIALIZE_PAYMENT_FAILURE, (state, { payload }) => {
       state.loadingStates.paymentInitialization = false;
-      state.error = action.payload;
+      state.error = payload;
       state.complianceStatus = {
         ...state.complianceStatus!,
         lastVerified: new Date(),
@@ -96,24 +96,24 @@ export const paymentReducer = createReducer(INITIAL_STATE, (builder) => {
       state.error = null;
       state.currentVerification = null;
     })
-    .addCase(PAYMENT_ACTION_TYPES.PROCESS_PAYMENT_SUCCESS, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.PROCESS_PAYMENT_SUCCESS, (state, { payload }) => {
       state.loadingStates.paymentProcessing = false;
-      state.transactions = [...state.transactions, action.payload];
+      state.transactions = [...state.transactions, payload];
       state.currentVerification = {
         isValid: true,
-        ref: action.payload.blockchainRef,
-        txHash: action.payload.blockchainTxHash,
+        ref: payload.blockchainRef,
+        txHash: payload.blockchainTxHash,
         timestamp: new Date()
       };
       state.complianceStatus = {
         ...state.complianceStatus!,
         lastVerified: new Date(),
-        auditId: `PROCESS_${action.payload.transactionId}`
+        auditId: `PROCESS_${payload.transactionId}`
       };
     })
-    .addCase(PAYMENT_ACTION_TYPES.PROCESS_PAYMENT_FAILURE, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.PROCESS_PAYMENT_FAILURE, (state, { payload }) => {
       state.loadingStates.paymentProcessing = false;
-      state.error = action.payload;
+      state.error = payload;
       state.currentVerification = {
         isValid: false,
         ref: '',
@@ -127,27 +127,27 @@ export const paymentReducer = createReducer(INITIAL_STATE, (builder) => {
       state.loadingStates.blockchainVerification = true;
       state.error = null;
     })
-    .addCase(PAYMENT_ACTION_TYPES.VERIFY_BLOCKCHAIN_SUCCESS, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.VERIFY_BLOCKCHAIN_SUCCESS, (state, { payload }) => {
       state.loadingStates.blockchainVerification = false;
       state.currentVerification = {
-        isValid: action.payload.isValid,
-        ref: action.payload.blockchainRef,
-        txHash: action.payload.txHash,
+        isValid: payload.isValid,
+        ref: payload.blockchainRef,
+        txHash: payload.txHash,
         timestamp: new Date()
       };
       
       // Update transaction verification status if found
       if (state.selectedTransaction && 
-          state.selectedTransaction.blockchainRef === action.payload.blockchainRef) {
+          state.selectedTransaction.blockchainRef === payload.blockchainRef) {
         state.selectedTransaction = {
           ...state.selectedTransaction,
-          blockchainTxHash: action.payload.txHash
+          blockchainTxHash: payload.txHash
         };
       }
     })
-    .addCase(PAYMENT_ACTION_TYPES.VERIFY_BLOCKCHAIN_FAILURE, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.VERIFY_BLOCKCHAIN_FAILURE, (state, { payload }) => {
       state.loadingStates.blockchainVerification = false;
-      state.error = action.payload;
+      state.error = payload;
       state.currentVerification = {
         isValid: false,
         ref: '',
@@ -161,18 +161,18 @@ export const paymentReducer = createReducer(INITIAL_STATE, (builder) => {
       state.loadingStates.historyFetch = true;
       state.error = null;
     })
-    .addCase(PAYMENT_ACTION_TYPES.FETCH_HISTORY_SUCCESS, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.FETCH_HISTORY_SUCCESS, (state, { payload }) => {
       state.loadingStates.historyFetch = false;
-      state.transactions = action.payload;
+      state.transactions = payload;
       state.complianceStatus = {
         ...state.complianceStatus!,
         lastVerified: new Date(),
         auditId: `HISTORY_${Date.now()}`
       };
     })
-    .addCase(PAYMENT_ACTION_TYPES.FETCH_HISTORY_FAILURE, (state, action) => {
+    .addCase(PAYMENT_ACTION_TYPES.FETCH_HISTORY_FAILURE, (state, { payload }) => {
       state.loadingStates.historyFetch = false;
-      state.error = action.payload;
+      state.error = payload;
     });
 });
 

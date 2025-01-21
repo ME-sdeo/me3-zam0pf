@@ -76,11 +76,7 @@ export const notificationReducer = createReducer(initialState, (builder) => {
       state.loading = true;
       state.error = null;
     })
-    .addCase(NotificationActionTypes.FETCH_NOTIFICATIONS_SUCCESS, (state, action: PayloadAction<{
-      notifications: Notification[];
-      total: number;
-      page: number;
-    }>) => {
+    .addCase(NotificationActionTypes.FETCH_NOTIFICATIONS_SUCCESS, (state, action) => {
       state.loading = false;
       state.notifications = action.payload.page === 1 
         ? action.payload.notifications 
@@ -97,26 +93,26 @@ export const notificationReducer = createReducer(initialState, (builder) => {
       // Calculate unread count
       state.unreadCount = state.notifications.filter(n => !n.read).length;
     })
-    .addCase(NotificationActionTypes.FETCH_NOTIFICATIONS_FAILURE, (state, action: PayloadAction<string>) => {
+    .addCase(NotificationActionTypes.FETCH_NOTIFICATIONS_FAILURE, (state, action) => {
       state.loading = false;
       state.error = action.payload;
     })
 
     // WebSocket connection handlers
-    .addCase(NotificationActionTypes.WEBSOCKET_CONNECT_START, (state) => {
-      state.websocketError = null;
-    })
-    .addCase(NotificationActionTypes.WEBSOCKET_CONNECT_SUCCESS, (state) => {
+    .addCase(NotificationActionTypes.WEBSOCKET_CONNECTED, (state) => {
       state.websocketConnected = true;
       state.websocketError = null;
     })
-    .addCase(NotificationActionTypes.WEBSOCKET_CONNECT_FAILURE, (state, action: PayloadAction<string>) => {
+    .addCase(NotificationActionTypes.WEBSOCKET_DISCONNECTED, (state) => {
       state.websocketConnected = false;
-      state.websocketError = action.payload;
+    })
+    .addCase(NotificationActionTypes.WEBSOCKET_ERROR, (state, action) => {
+      state.websocketConnected = false;
+      state.websocketError = action.payload.message;
     })
 
-    // Real-time notification handlers
-    .addCase(NotificationActionTypes.NOTIFICATION_RECEIVED, (state, action: PayloadAction<Notification>) => {
+    // WebSocket message handler
+    .addCase(NotificationActionTypes.WEBSOCKET_MESSAGE, (state, action) => {
       const notification = action.payload;
       
       // Add to cache
@@ -141,43 +137,6 @@ export const notificationReducer = createReducer(initialState, (builder) => {
           expiresAt: notification.metadata.expiresAt
         });
       }
-    })
-
-    // Cache update handlers
-    .addCase(NotificationActionTypes.UPDATE_CACHE_START, (state) => {
-      state.loading = true;
-    })
-    .addCase(NotificationActionTypes.UPDATE_CACHE_SUCCESS, (state, action: PayloadAction<{
-      notificationId: string;
-      updates: Partial<Notification>;
-    }>) => {
-      const { notificationId, updates } = action.payload;
-      
-      // Update cache
-      if (state.cache[notificationId]) {
-        state.cache[notificationId] = {
-          ...state.cache[notificationId],
-          ...updates
-        };
-      }
-
-      // Update notifications list
-      state.notifications = state.notifications.map(notification =>
-        notification.id === notificationId
-          ? { ...notification, ...updates }
-          : notification
-      );
-
-      // Update unread count if read status changed
-      if (updates.read !== undefined) {
-        state.unreadCount = state.notifications.filter(n => !n.read).length;
-      }
-
-      state.loading = false;
-    })
-    .addCase(NotificationActionTypes.UPDATE_CACHE_FAILURE, (state, action: PayloadAction<string>) => {
-      state.loading = false;
-      state.error = action.payload;
     })
 
     // Clean up expired system alerts

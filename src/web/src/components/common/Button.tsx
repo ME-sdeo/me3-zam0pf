@@ -3,7 +3,7 @@ import classNames from 'classnames'; // ^2.3.2
 import styles from '../../styles/components/_button.scss';
 
 // Type definitions for button props
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'critical' | 'consent-required';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'critical' | 'consent-required' | 'text';
 type ButtonType = 'button' | 'submit' | 'reset';
 
 interface ButtonProps {

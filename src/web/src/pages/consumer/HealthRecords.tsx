@@ -4,7 +4,7 @@ import FHIRResourceView from '../../components/fhir/FHIRResourceView';
 import FHIRUploader from '../../components/fhir/FHIRUploader';
 import FHIRValidator from '../../components/fhir/FHIRValidator';
 import { useFHIR } from '../../hooks/useFHIR';
-import { IFHIRResource, IFHIRValidationResult, IFHIRValidationError } from '../../interfaces/fhir.interface';
+import { IFHIRResource, IFHIRValidationResult, IFHIRValidationError, FHIRSummaryType } from '../../interfaces/fhir.interface';
 import { FHIR_VALIDATION_RULES } from '../../constants/fhir.constants';
 
 interface HealthRecordsState {
@@ -33,7 +33,6 @@ const HealthRecords: React.FC = () => {
   const { 
     resources,
     loading,
-    error,
     metrics,
     uploadResource,
     validateResource,
@@ -53,7 +52,7 @@ const HealthRecords: React.FC = () => {
           pagination: { _count: 10 },
           includes: [],
           sort: [{ field: 'lastUpdated', order: 'desc' }],
-          summary: 'false'
+          summary: FHIRSummaryType.False
         });
       } catch (err) {
         setState(prev => ({
@@ -170,7 +169,7 @@ const HealthRecords: React.FC = () => {
               onUploadError={handleUploadError}
               onValidationError={handleValidationError}
               onAuditEvent={handleAuditEvent}
-              maxFileSize={FHIR_VALIDATION_RULES.MAX_RESOURCE_SIZE}
+              maxFileSize={5 * 1024 * 1024}
               allowedMimeTypes={FHIR_VALIDATION_RULES.SUPPORTED_FORMATS.map(format => `.${format}`)}
               accessibilityLabels={{
                 dropzone: 'Drop FHIR resource files here or click to select',
